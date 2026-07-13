@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TK Conquest — Admin Console</title>
+<style>
+:root{--ink:#2b2320;--ink2:#4a3f38;--parch:#f3e9d2;--silk:#fbf5e6;--seal:#b3352b;--seal-d:#8e281f;--gold:#c9a227;--shu:#2e8b57;}
+*{box-sizing:border-box}
+body{margin:0;font-family:Georgia,'Times New Roman',serif;background:var(--parch);color:var(--ink);}
+.wrap{max-width:640px;margin:0 auto;padding:18px 16px 60px;}
+h1{font-size:26px}h3{margin:0 0 8px}
+.card{background:var(--silk);border:1px solid #d9c9a3;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 4px 12px rgba(43,35,32,.12);}
+label{font-size:13px;color:var(--ink2);display:block;margin:8px 0 4px;}
+input,select{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #cbb98d;background:#fffdf6;font-family:inherit;font-size:15px;}
+.btn{display:inline-block;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;font-family:inherit;font-size:15px;color:var(--silk);background:var(--seal);box-shadow:0 3px 0 var(--seal-d);margin:6px 4px 0 0;}
+.btn.gold{background:var(--gold);color:#3a2f08;box-shadow:0 3px 0 #a5821a;}
+.btn.dark{background:var(--ink);box-shadow:0 3px 0 #000;}
+.btn:active{transform:translateY(2px);box-shadow:none;}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:8px;align-items:center;}
+.grow{flex:1}
+.note{font-size:12.5px;color:var(--ink2);line-height:1.5;}
+.item{display:flex;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px dashed #d9c9a3;}
+.pill{background:#efe3c4;border:1px solid #d7c398;border-radius:999px;padding:3px 10px;font-size:12px;}
+.toggle{position:relative;width:48px;height:26px;flex:none;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle i{position:absolute;inset:0;background:#c9bb96;border-radius:999px;cursor:pointer;transition:.2s;}
+.toggle i::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;}
+.toggle input:checked+i{background:var(--shu);}
+.toggle input:checked+i::after{left:25px;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--silk);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;max-width:92vw;}
+.tabbar{display:flex;gap:6px;margin:10px 0;}
+.tabbar .btn{margin:0;}
+#login-gate .card{max-width:420px;margin:60px auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+td,th{padding:6px 4px;border-bottom:1px dashed #d9c9a3;text-align:left;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="card" id="origin-warning" style="display:none;border-color:#b3352b">
+  <h3 style="color:var(--seal)">⚠ Storage may not be shared with the game</h3>
+  <p class="note" id="origin-warning-text"></p>
+</div>
+
+<!-- gate -->
+<div id="login-gate">
+  <div class="card">
+    <h1>⚙ Admin Console</h1>
+    <p class="note">Three Kingdoms: Conquest — game administration. This console is separate from the player game. Serve it from the <b>same folder/domain</b> as the game to manage local-mode data, or connect it to your backend server.</p>
+    <label>Admin PIN (local mode — default 1234)</label>
+    <input type="password" id="gate-pin">
+    <button class="btn" id="btn-unlock">Unlock local mode</button>
+    <hr style="border:none;border-top:1.5px dashed #d0bd92;margin:14px 0">
+    <label>Backend URL (optional — server mode)</label>
+    <input type="url" id="gate-url" placeholder="https://tk3k.yourdomain.com">
+    <label>Admin key (ADMIN_KEY from your server env)</label>
+    <input type="password" id="gate-key">
+    <button class="btn dark" id="btn-connect">Connect to server</button>
+  </div>
+</div>
+
+<!-- console -->
+<div id="console" style="display:none">
+  <div class="row"><h1 class="grow">⚙ Admin Console</h1><span class="pill" id="mode-pill"></span></div>
+
+  <div class="card">
+    <h3>Ad controls</h3>
+    <div class="row"><span class="grow">Ads enabled (master)</span><label class="toggle"><input type="checkbox" id="ad-enabled"><i></i></label></div>
+    <div class="row" style="margin-top:6px"><span class="grow">Banner ads on menus</span><label class="toggle"><input type="checkbox" id="ad-banner"><i></i></label></div>
+    <label>Interstitial after every N battles</label><input type="number" id="ad-freq" min="1" max="20">
+    <label>Interstitial display seconds</label><input type="number" id="ad-secs" min="1" max="30">
+    <label>Banner rotation seconds</label><input type="number" id="ad-rot" min="3" max="120">
+  </div>
+
+  <div class="card">
+    <h3>Ad inventory</h3>
+    <div id="ad-list"></div>
+    <label>Title</label><input id="new-ad-title">
+    <label>Text</label><input id="new-ad-text">
+    <label>Image URL (optional)</label><input id="new-ad-img">
+    <label>Link (optional)</label><input id="new-ad-url">
+    <button class="btn gold" id="btn-add-ad">＋ Add ad</button>
+  </div>
+
+  <div class="card">
+    <h3>Music rotation</h3>
+    <p class="note">Built-in synthesized tracks always play; URLs added here join the rotation for all players.</p>
+    <div id="music-list"></div>
+    <label>MP3/OGG URL</label><input id="new-music">
+    <button class="btn gold" id="btn-add-music">＋ Add track</button>
+  </div>
+
+  <div class="card">
+    <h3>Game difficulty (global)</h3>
+    <select id="diff-adj">
+      <option value="-3">−3 much easier</option><option value="-2">−2</option><option value="-1">−1 easier</option>
+      <option value="0">0 designed curve</option>
+      <option value="1">+1 harder</option><option value="2">+2</option><option value="3">+3 much harder</option>
+    </select>
+  </div>
+
+  <button class="btn gold" id="btn-save" style="width:100%">💾 Save all settings</button>
+  <p class="note" id="save-status" style="text-align:center"></p>
+
+  <div class="card">
+    <h3>Players</h3>
+    <div id="player-list"><p class="note">Local mode lists players saved in this browser; server mode lists all cloud players.</p></div>
+    <div class="row" style="margin-top:8px">
+      <input id="pin-player" class="grow" placeholder="Commander name">
+      <button class="btn" id="btn-clear-pin">Clear passcode</button>
+    </div>
+  </div>
+
+  <div class="card" id="local-tools">
+    <h3>Local data tools</h3>
+    <p class="note">Exports every player profile and setting stored in this browser to a JSON file (your "user state file"). Import restores it — e.g., to move data to another machine or keep backups.</p>
+    <button class="btn" id="btn-export">⬇ Export users & settings (JSON)</button>
+    <button class="btn dark" id="btn-import">⬆ Import from file</button>
+    <input type="file" id="import-file" accept=".json" style="display:none">
+  </div>
+
+  <div class="card">
+    <h3>Resets & security</h3>
+    <button class="btn" id="btn-reset-ads">Reset ads/music/difficulty to defaults</button>
+    <button class="btn dark" id="btn-reset-board">Reset leaderboard</button>
+    <label>Change admin PIN (local mode)</label>
+    <div class="row"><input type="password" id="new-pin" class="grow"><button class="btn" id="btn-set-pin">Set</button></div>
+  </div>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+// Local-mode storage only works if this console and the game are served from the SAME origin
+// (same protocol + domain + port). file:// pages are isolated per-file in most browsers, which is
+// the #1 cause of "I added a track but it's not there after refresh / not in the game".
+(function checkOrigin(){
+  const isFile = location.protocol === 'file:';
+  if(isFile){
+    const w = document.getElementById('origin-warning');
+    w.style.display='block';
+    document.getElementById('origin-warning-text').innerHTML =
+      `You opened this file directly (<code>file://…</code>). Browsers isolate local-file storage, ` +
+      `so settings saved here in <b>Local mode</b> often won't reach the game page — and may even reset ` +
+      `on refresh. <b>Fix:</b> serve both <code>admin.html</code> and the game file from a real local web server ` +
+      `(e.g. run <code>npx serve .</code> in the folder, or use VS Code's "Live Server" extension) and open both ` +
+      `pages via <code>http://localhost:...</code> instead of double-clicking the files. Once both pages share ` +
+      `the same <code>http://</code> origin, Local mode storage will sync correctly between them.`;
+  }
+})();
+let toastT; function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity=0,2600);}
+const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+const DEFAULT_ADCFG={enabled:true,banner:true,freq:2,secs:5,rot:8,defaultAd:0,diffAdj:0,music:[],
+  ads:[{id:'d1',title:'Your ad here',text:'Configure ads in the Admin Console.',img:'',url:''},
+       {id:'d2',title:'Silk Road Traders',text:'Sample rotational ad — replace me.',img:'',url:''}]};
+
+let MODE=null, API_URL='', ADMIN_KEY='', adcfg=null;
+const LS_ADCFG='tk3k_S:adcfg', LS_PIN='tk3k_S:adminpin', LS_BOARD='tk3k_S:leaderboard';
+
+async function hashPin(str){
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('tk3k·'+str));
+    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+  catch(e){let h=5381;for(const c of str)h=((h*33)^c.charCodeAt(0))>>>0;return 'w'+h;}
+}
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+async function apiCall(path,opts={}){
+  const r=await fetch(API_URL+path,{...opts,
+    headers:{'Content-Type':'application/json','X-Admin-Key':ADMIN_KEY,...(opts.headers||{})},
+    body:opts.body?JSON.stringify(opts.body):undefined});
+  if(!r.ok) throw new Error('API '+r.status);
+  return r.json();
+}
+
+/* ---------- gate ---------- */
+$('#btn-unlock').onclick=()=>{
+  const pin=$('#gate-pin').value||'';
+  const saved=lsGet(LS_PIN)||'1234';
+  if(pin!==saved){toast('Wrong PIN');return;}
+  MODE='local'; openConsole();
+};
+$('#btn-connect').onclick=async()=>{
+  API_URL=($('#gate-url').value||'').replace(/\/$/,'');
+  ADMIN_KEY=$('#gate-key').value||'';
+  if(!API_URL){toast('Enter the backend URL');return;}
+  try{ await apiCall('/api/admin/ping'); MODE='server'; openConsole(); }
+  catch(e){ toast('Cannot reach server or bad admin key'); }
+};
+
+async function openConsole(){
+  $('#login-gate').style.display='none';
+  $('#console').style.display='block';
+  $('#mode-pill').textContent = MODE==='server'?'☁ Server mode':'💾 Local mode';
+  $('#local-tools').style.display = MODE==='local'?'block':'none';
+  adcfg = MODE==='server' ? (await apiCall('/api/admin/adcfg')).adcfg||{...DEFAULT_ADCFG}
+                          : lsGet(LS_ADCFG)||{...DEFAULT_ADCFG};
+  adcfg.ads=adcfg.ads||[]; adcfg.music=adcfg.music||[];
+  fillForm(); renderAds(); renderMusic(); renderPlayers();
+}
+function fillForm(){
+  $('#ad-enabled').checked=!!adcfg.enabled; $('#ad-banner').checked=!!adcfg.banner;
+  $('#ad-freq').value=adcfg.freq??2; $('#ad-secs').value=adcfg.secs??5; $('#ad-rot').value=adcfg.rot??8;
+  $('#diff-adj').value=String(adcfg.diffAdj||0);
+}
+function renderAds(){
+  $('#ad-list').innerHTML=adcfg.ads.map((a,i)=>`<div class="item"><div class="grow"><b>${esc(a.title)}</b><br><span class="note">${esc(a.text)}</span></div><button class="btn dark" data-d="${i}">✕</button></div>`).join('')||'<p class="note">No ads.</p>';
+  $$('#ad-list [data-d]').forEach(b=>b.onclick=()=>{adcfg.ads.splice(+b.dataset.d,1);renderAds();});
+}
+function renderMusic(){
+  $('#music-list').innerHTML=adcfg.music.map((u,i)=>`<div class="item"><div class="grow note" style="word-break:break-all">${esc(u)}</div><button class="btn dark" data-m="${i}">✕</button></div>`).join('')||'<p class="note">No custom tracks.</p>';
+  $$('#music-list [data-m]').forEach(b=>b.onclick=()=>{adcfg.music.splice(+b.dataset.m,1);renderMusic();});
+}
+$('#btn-add-ad').onclick=()=>{
+  const t=$('#new-ad-title').value.trim(); if(!t){toast('Ad needs a title');return;}
+  adcfg.ads.push({id:'a'+Date.now(),title:t,text:$('#new-ad-text').value.trim(),img:$('#new-ad-img').value.trim(),url:$('#new-ad-url').value.trim()});
+  $('#new-ad-title').value=$('#new-ad-text').value=$('#new-ad-img').value=$('#new-ad-url').value='';
+  renderAds(); toast('Added — remember to Save');
+};
+$('#btn-add-music').onclick=()=>{
+  const u=$('#new-music').value.trim();
+  if(!/^https?:\/\//.test(u)){toast('Enter a valid http(s) URL');return;}
+  adcfg.music.push(u); $('#new-music').value=''; renderMusic(); toast('Added — remember to Save');
+};
+$('#btn-save').onclick=async()=>{
+  adcfg.enabled=$('#ad-enabled').checked; adcfg.banner=$('#ad-banner').checked;
+  adcfg.freq=Math.max(1,+$('#ad-freq').value||2); adcfg.secs=Math.max(1,+$('#ad-secs').value||5);
+  adcfg.rot=Math.max(3,+$('#ad-rot').value||8); adcfg.diffAdj=+$('#diff-adj').value||0;
+  if(MODE==='server'){
+    await apiCall('/api/admin/adcfg',{method:'PUT',body:{adcfg}});
+    toast('✓ Saved to server for all players');
+  } else {
+    lsSet(LS_ADCFG,adcfg);
+    // verify the write actually landed (catches file:// isolation / private-browsing / quota issues silently)
+    const roundTrip = lsGet(LS_ADCFG);
+    const ok = roundTrip && JSON.stringify(roundTrip.music||[])===JSON.stringify(adcfg.music||[]);
+    if(ok){
+      toast('✓ Saved to this browser\'s storage');
+      $('#save-status').innerHTML = `Last saved ${new Date().toLocaleTimeString()} — ${adcfg.music.length} custom track(s) in storage.`;
+    } else {
+      toast('⚠ Save did not persist — see warning above');
+      $('#save-status').innerHTML = `<span style="color:var(--seal)">⚠ Could not verify the save. This browser/origin may not be persisting localStorage (private browsing, file:// isolation, or storage disabled).</span>`;
+    }
+  }
+};
+$('#btn-reset-ads').onclick=async()=>{
+  adcfg=JSON.parse(JSON.stringify(DEFAULT_ADCFG));
+  if(MODE==='server') await apiCall('/api/admin/adcfg',{method:'PUT',body:{adcfg}});
+  else lsSet(LS_ADCFG,adcfg);
+  fillForm(); renderAds(); renderMusic(); toast('Reset to defaults');
+};
+$('#btn-reset-board').onclick=async()=>{
+  if(MODE==='server') await apiCall('/api/admin/reset-leaderboard',{method:'POST'});
+  else lsSet(LS_BOARD,{});
+  toast('Leaderboard wiped');
+};
+$('#btn-set-pin').onclick=()=>{
+  const p=$('#new-pin').value.trim();
+  if(p.length<4){toast('PIN must be 4+ characters');return;}
+  lsSet(LS_PIN,p); $('#new-pin').value=''; toast('Admin PIN updated (local mode)');
+};
+
+/* ---------- players ---------- */
+async function renderPlayers(){
+  const el=$('#player-list');
+  if(MODE==='server'){
+    try{
+      const {players}=await apiCall('/api/admin/players');
+      el.innerHTML='<table><tr><th>Name</th><th>Merit</th><th>Wins</th><th>Google</th></tr>'+
+        players.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.meritLife||p.merit||0}</td><td>${p.wins||0}</td><td>${p.google?'✓':''}</td></tr>`).join('')+'</table>';
+    }catch(e){ el.innerHTML='<p class="note">Could not load players.</p>'; }
+    return;
+  }
+  const rows=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('tk3k_P:player:')){
+      const p=lsGet(k)||{};
+      rows.push({name:k.slice('tk3k_P:player:'.length), merit:p.meritLife??p.merit??0, wins:p.wins||0, pin:!!p.pinHash});
+    }
+  }
+  el.innerHTML= rows.length? '<table><tr><th>Name</th><th>Merit</th><th>Wins</th><th>Passcode</th></tr>'+
+    rows.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.merit}</td><td>${p.wins}</td><td>${p.pin?'🔒':''}</td></tr>`).join('')+'</table>'
+    : '<p class="note">No players saved in this browser yet.</p>';
+}
+$('#btn-clear-pin').onclick=async()=>{
+  const name=$('#pin-player').value.trim();
+  if(!name){toast('Enter the player name');return;}
+  if(MODE==='server'){
+    try{ await apiCall('/api/admin/clear-pin',{method:'POST',body:{name}}); toast(`🔓 Cleared for "${name}"`); }
+    catch(e){ toast('Player not found'); }
+    return;
+  }
+  const k='tk3k_P:player:'+name;
+  const p=lsGet(k);
+  if(!p){toast(`No player "${name}" in this browser`);return;}
+  delete p.pinHash; lsSet(k,p); renderPlayers(); toast(`🔓 Passcode cleared for "${name}"`);
+};
+
+/* ---------- export / import (local user-state file) ---------- */
+$('#btn-export').onclick=()=>{
+  const out={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('tk3k_')) out[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='tk3k-users-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('⬇ Exported user state file');
+};
+$('#btn-import').onclick=()=>$('#import-file').click();
+$('#import-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      let n=0;
+      for(const [k,v] of Object.entries(data)) if(k.startsWith('tk3k_')){ localStorage.setItem(k,v); n++; }
+      renderPlayers(); openConsole(); toast(`⬆ Imported ${n} entries`);
+    }catch(err){ toast('Invalid file'); }
+  };
+  r.readAsText(f);
+};
+</script>
+</body>
+</html>

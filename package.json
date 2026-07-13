@@ -1,0 +1,13 @@
+{
+  "name": "tk-conquest-backend",
+  "version": "1.0.0",
+  "description": "Backend for Three Kingdoms: Conquest — Google sign-in, cloud saves, shared leaderboards",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.0",
+    "better-sqlite3": "^11.0.0",
+    "google-auth-library": "^9.11.0"
+  }
+}
