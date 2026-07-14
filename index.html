@@ -568,6 +568,15 @@ async function fetchCloudAdcfg(){
   }catch(e){}
   return null;
 }
+// Pull the freshest admin config (cloud → local cache → current in-memory → defaults)
+// before any battle is built, so admin changes (wonderMax, diffAdj, etc.) never go stale.
+async function refreshAdcfg(){
+  adcfg = (BACKEND_URL ? await fetchCloudAdcfg() : null)
+       || (await store.get('adcfg', true)) || adcfg || JSON.parse(JSON.stringify(DEFAULT_ADCFG));
+  if(adcfg.wonderMax==null) adcfg.wonderMax = 1;
+  if(TEST && TEST.wonders!=null) adcfg.wonderMax = TEST.wonders; // Test Lab override stays in-memory only
+  return adcfg;
+}
 async function initGoogleSignIn(){
   if(!BACKEND_URL) return;
   try{
@@ -1735,7 +1744,8 @@ function applyGeneral(){
   G.mods.atk    *= 1 + 0.03*(u.armory||0);
   G.heroLvl = lvl;
 }
-function startCampaign(n){
+async function startCampaign(n){
+  await refreshAdcfg();
   const L = campaignLevel(n);
   G.mode='campaign'; G.level=n; G.par=L.par; G.rivalName=null;
   if(L.layout) buildFromLayout({...L.layout, boost:L.boost});
@@ -1746,7 +1756,8 @@ function startCampaign(n){
   G.diffLabel = `Tier ${G.tier}/10 · ${TIER_NAMES[G.tier-1]}` + (L.boss?' · 👹 BOSS':'');
   beginBattle(`Battle ${n}${L.boss?' · ⚔ BOSS':''}`, L);
 }
-function startSkirmish(){
+async function startSkirmish(){
+  await refreshAdcfg();
   const opp=+$('#sk-opp').value, tier=+$('#sk-diff').value, size=+$('#sk-size').value;
   G.mode='skirmish'; G.level=tier; G.par=70+size*3; G.rivalName=null;
   randomMap(size, opp, Date.now()&0xffff);
@@ -1759,7 +1770,8 @@ function weekKey(){
   const w=Math.ceil((((d-j)/864e5)+j.getDay()+1)/7);
   return d.getFullYear()+'-W'+String(w).padStart(2,'0');
 }
-function startWeekly(){
+async function startWeekly(){
+  await refreshAdcfg();
   const wk = weekKey();
   let seed=0; for(const c of wk) seed=(seed*31 + c.charCodeAt(0))>>>0;
   G.mode='weekly'; G.level=60; G.par=110; G.rivalName=null;
@@ -1769,7 +1781,8 @@ function startWeekly(){
   beginBattle(`🗺 Weekly Challenge ${wk}`);
 }
 $('#btn-weekly').onclick = ()=> startWeekly();
-function startRival(name){
+async function startRival(name){
+  await refreshAdcfg();
   G.mode='rival'; G.level=3; G.par=90; G.rivalName=name;
   randomMap(13, 1, Date.now()&0xffff);
   factionColors(1); setupAI(8);
