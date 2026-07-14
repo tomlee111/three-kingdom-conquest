@@ -43,6 +43,9 @@ db.exec(`
     key TEXT PRIMARY KEY, value TEXT
   );
 `);
+try { db.exec('ALTER TABLE players ADD COLUMN pin_hash TEXT'); } catch (e) { /* column exists */ }
+try { db.exec('ALTER TABLE players ADD COLUMN last_seen INTEGER DEFAULT 0'); } catch (e) { /* column exists */ }
+const pinHash = (pin) => crypto.createHash('sha256').update('tk3k·' + pin).digest('hex');
 
 // ---------- tiny JWT (HS256, no dependency) ----------
 const b64u = (buf) => Buffer.from(buf).toString('base64url');
@@ -81,6 +84,7 @@ function auth(req, res, next) {
   const payload = m && verifyToken(m[1]);
   if (!payload) return res.status(401).json({ error: 'unauthorized' });
   req.playerId = payload.sub;
+  try { db.prepare('UPDATE players SET last_seen=? WHERE id=?').run(Date.now(), payload.sub); } catch (e) {}
   next();
 }
 function adminAuth(req, res, next) {
@@ -143,6 +147,37 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
+// ---------- auth: name + passcode (cross-device without Google) ----------
+app.post('/api/auth/local', (req, res) => {
+  const { name, pin } = req.body || {};
+  if (typeof name !== 'string' || !/^[\w\- ]{2,16}$/.test(name.trim()))
+    return res.status(400).json({ error: 'bad name' });
+  if (typeof pin !== 'string' || pin.length < 4)
+    return res.status(400).json({ error: 'passcode must be 4+ characters' });
+  const clean = name.trim();
+  const id = 'local:' + clean.toLowerCase();
+  let row = db.prepare('SELECT * FROM players WHERE id=?').get(id);
+  if (!row) {
+    // creating: the display name must be free across ALL accounts (incl. Google ones)
+    if (db.prepare('SELECT 1 FROM players WHERE name=?').get(clean))
+      return res.status(409).json({ error: 'name taken' });
+    const prof = defaultProfile(clean);
+    db.prepare(`INSERT INTO players (id,name,email,profile,merit_life,wins,best_streak,rank,updated_at,pin_hash)
+                VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, clean, '', JSON.stringify(prof), 0, 0, 0, '', Date.now(), pinHash(pin));
+    row = db.prepare('SELECT * FROM players WHERE id=?').get(id);
+  } else {
+    if (!row.pin_hash) {
+      // account existed without a passcode (e.g. admin-cleared): this login sets a new one
+      db.prepare('UPDATE players SET pin_hash=? WHERE id=?').run(pinHash(pin), id);
+    } else if (row.pin_hash !== pinHash(pin)) {
+      return res.status(401).json({ error: 'wrong passcode' });
+    }
+  }
+  const token = signToken({ sub: id });
+  res.json({ token, profile: JSON.parse(row.profile) });
+});
+
 // ---------- profile sync ----------
 app.get('/api/profile', auth, (req, res) => {
   const row = db.prepare('SELECT profile FROM players WHERE id=?').get(req.playerId);
@@ -201,7 +236,7 @@ app.post('/api/admin/clear-pin', adminAuth, (req, res) => {
   if (!row) return res.status(404).json({ error: 'not found' });
   const prof = JSON.parse(row.profile);
   delete prof.pinHash;
-  db.prepare('UPDATE players SET profile=? WHERE id=?').run(JSON.stringify(prof), row.id);
+  db.prepare('UPDATE players SET profile=?, pin_hash=NULL WHERE id=?').run(JSON.stringify(prof), row.id);
   res.json({ ok: true });
 });
 app.get('/api/admin/adcfg', adminAuth, (req, res) => {
@@ -221,6 +256,19 @@ app.post('/api/admin/reset-leaderboard', adminAuth, (req, res) => {
   db.prepare('UPDATE players SET merit_life=0, wins=0, best_streak=0').run();
   db.prepare('DELETE FROM weekly').run();
   res.json({ ok: true });
+});
+
+// ---------- presence: who is online right now (for the in-game Live Challenge dropdown) ----------
+app.post('/api/presence', auth, (req, res) => {
+  // auth middleware already stamped last_seen — this endpoint exists as an idle-menu heartbeat
+  res.json({ ok: true });
+});
+app.get('/api/online', (req, res) => {
+  const since = Date.now() - 2 * 60 * 1000; // active within the last 2 minutes
+  const online = db.prepare(
+    'SELECT name, merit_life AS merit, rank FROM players WHERE last_seen > ? ORDER BY merit_life DESC LIMIT 50'
+  ).all(since);
+  res.json({ online });
 });
 
 app.listen(PORT, () => console.log(`TK Conquest backend listening on :${PORT}`));

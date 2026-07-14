@@ -109,6 +109,11 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
 #cv{display:block;width:100%;height:100%;touch-action:none;}
 #battle-toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(43,35,32,.85);color:var(--silk);
   padding:8px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:6;white-space:nowrap;}
+#battle-big{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%) scale(.7);z-index:7;pointer-events:none;
+  font-family:'ZCOOL XiaoWei','Noto Serif SC',serif;font-size:42px;font-weight:bold;color:var(--seal);text-align:center;
+  opacity:0;transition:opacity .25s, transform .25s;white-space:nowrap;letter-spacing:2px;
+  text-shadow:0 2px 0 var(--parch),0 -2px 0 var(--parch),2px 0 0 var(--parch),-2px 0 0 var(--parch),0 8px 22px rgba(0,0,0,.4);}
+#battle-big.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 .overlay{position:absolute;inset:0;background:rgba(30,24,20,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;padding:18px;}
 .overlay.active{display:flex;}
 .panel{background:var(--silk);border-radius:20px;padding:24px 20px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow);border:1px solid #d9c9a3;max-height:88vh;overflow:auto;}
@@ -157,6 +162,7 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
       <div id="google-btn" style="display:flex;justify-content:center"></div>
     </div>
     <p class="note">Progress saves to this name in this browser. Set a passcode and no one else can log into your commander. (True Google sign-in needs the game hosted on a server with OAuth — happy to set that up as a next step.)</p>
+    <div id="recent-cmds"></div>
   </div>
   <button class="btn ghost" id="btn-faq-login">❓ How to play</button>
 </section>
@@ -194,6 +200,25 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
   <button class="btn ghost" id="btn-faq">❓ How to Play / FAQ</button>
 </section>
 
+<!-- ============ BACKSTORY ============ -->
+<section class="screen" id="s-story">
+  <div class="topbar"><button class="back" data-back="s-levels">←</button><h2>📖 The Story So Far</h2></div>
+  <div class="card">
+    <h3 style="margin-top:0">Why is everyone fighting?</h3>
+    <p class="note">For four hundred years the Han dynasty ruled a united China. But by the late second century the court is rotten: child emperors sit the throne while eunuchs and in-laws sell offices, famine stalks the villages, and taxes feed palaces instead of granaries. When a faith healer named Zhang Jiao promises a new golden age, hundreds of thousands tie yellow scarves around their heads and rise in revolt. The dynasty survives the rebellion — but only by handing real armies to provincial governors and ambitious volunteers. The court never gets those armies back.</p>
+    <p class="note">A brutal frontier general, Dong Zhuo, seizes the capital and the boy emperor. The warlords who unite to stop him discover something more dangerous than any tyrant: that the empire is now simply whoever has the most soldiers. When the coalition dissolves, a generation of governors, adventurers, and opportunists begins carving the realm apart.</p>
+    <p class="note">Out of that chaos, three powers slowly crush or absorb all the others. <b>Wei</b> in the north, built by the brilliant and ruthless Cao Cao, who controls the emperor and speaks with his voice. <b>Shu-Han</b> in the western riverlands, founded by Liu Bei, a sandal-weaver of distant imperial blood who claims to be restoring the Han. <b>Wu</b> in the south, the river kingdom of the Sun family, defended by the Yangtze and the finest fleets in the world. Each believes it is the legitimate heir of the empire. Each needs the other two gone.</p>
+    <p class="note"><b>The goal — in history and in this game — is the same: unite the land.</b> One realm, one banner, an end to a century of war. Every campaign battle you fight is one step of that long road.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">The three sagas</h3>
+    <p class="note"><b>蜀 The Shu Saga</b> follows Liu Bei and his sworn brothers Guan Yu and Zhang Fei from the Oath in the Peach Garden — three volunteers with nothing but loyalty — through exile, alliance, and kingdom-building, to Zhuge Liang's desperate Northern Expeditions. It is the story of the underdog: virtue against power.</p>
+    <p class="note"><b>魏 The Wei Saga</b> follows Cao Cao from a lone pursuit no one else dared, through the miracle at Guandu against odds of ten to one, to an empire that must then be defended from genius, rebellion, and its own court. It is the story of the builder: order through strength.</p>
+    <p class="note"><b>吳 The Wu Saga</b> follows three generations of the Sun family — the Tiger, the Little Conqueror, and the patient younger brother — who turn the wild riverlands into a kingdom and burn the greatest fleet ever assembled at the Red Cliffs. It is the story of the survivor: the river holds.</p>
+  </div>
+  <p class="note" style="text-align:center">These stories are dramatized from the historical Three Kingdoms period (184–280 CE), one of the most retold eras in world literature.</p>
+</section>
+
 <!-- ============ FAQ ============ -->
 <section class="screen" id="s-faq">
   <div class="topbar"><button class="back" id="faq-back">←</button><h2>❓ How to Play</h2></div>
@@ -208,7 +233,12 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
   <div class="card"><details><summary><b>👑 Generals, XP & duo bonds</b></summary>
     <p class="note">Each kingdom fields six generals with different passives. Your commanding general earns XP every battle and their perk grows +5% per level (max Lv10). Unlock certain pairs and their <b>duo bond</b> adds a second bonus — see the Generals screen.</p></details></div>
   <div class="card"><details><summary><b>👹 Bosses & difficulty tiers</b></summary>
-    <p class="note">Every 10th battle is a boss with a crowned city and a special ability (announced in the briefing — plan around it!). Difficulty runs on 10 tiers from Recruit to Legend, ramping smoothly across the 200-battle campaign. Watch the tier chip at the top of every battle.</p></details></div>
+    <p class="note">Every 10th battle is a boss with a crowned city and a special ability (announced in the briefing — plan around it!). Difficulty runs on 10 tiers from Recruit to Legend, ramping smoothly across the 200-battle campaign. Watch the tier chip at the top of every battle.</p>
+    <p class="note"><b>Bosses flee!</b> When a warlord senses his city is about to fall, he evacuates with every soldier under a great banner and seizes a new stronghold — the crown, portrait, and boss ring move with him. Cut down the fleeing column, or chase him city to city until nowhere is left to run.</p></details></div>
+  <div class="card"><details><summary><b>✨ Special cities (Wonders)</b></summary>
+    <p class="note">Medium and larger maps contain neutral <b>special cities</b> marked with a pulsing gold ring, an icon, and their name. Capture one and its power serves you — lose it and the enemy benefits instead. The names tell you what they do:</p>
+    <p class="note">🏮 <b>Great Beacon</b> — your cities recruit 15% faster · ⛏ <b>Iron Mine</b> — attacks hit 12% harder · 🐎 <b>Horse Ranch</b> — armies march 20% faster · 🌾 <b>Grand Granary</b> — all cities hold +15 troops · 🥁 <b>War Drum Tower</b> — every order sends 10% more troops · ⛩ <b>Twin Gates</b> — attacks from this city launch a second wave · 💧 <b>Sacred Spring</b> — this city recruits twice as fast and holds +40 · ✴ <b>Caltrop Fields</b> — enemy armies march 15% slower · 🛡 <b>Stone Bastion</b> — attacks against your cities are 10% weaker · 🪖 <b>Levy Grounds</b> — all your cities gain +2 troops every 15s · 🪙 <b>Imperial Mint</b> — win while holding it for +25 bonus merit.</p>
+    <p class="note">The battle briefing lists which special cities are on the map. How many can appear is set by the game admin (default: 1 per map).</p></details></div>
   <div class="card"><details><summary><b>🗺 Weekly Challenge & badges</b></summary>
     <p class="note">One shared map per week — everyone races the same battlefield for the fastest clear (top times on the Leaderboard screen). Badges and crowns are earned for campaign milestones, streaks, and feats; show them off on your profile.</p></details></div>
   <div class="card"><details><summary><b>🔒 Protecting your commander</b></summary>
@@ -244,6 +274,8 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
   <div class="topbar"><button class="back" data-back="s-menu">←</button><h2>Campaign</h2><span class="pill" id="camp-stars"></span>
     <button class="back" id="btn-restart-camp" title="Restart this saga" style="font-size:15px">↺</button></div>
   <div class="row" id="saga-tabs" style="margin:2px 0"></div>
+  <button class="btn ghost small" id="btn-story" style="width:100%;margin:4px 0">📖 The Story So Far — why are we fighting?</button>
+  <button class="btn ghost small" id="btn-epilogue" style="width:100%;margin:4px 0;display:none;border-color:var(--gold);color:var(--gold-d)">🏮 View the Saga Epilogue</button>
   <div class="row" style="margin:4px 0">
     <button class="back" id="ch-prev">◀</button>
     <div class="grow" style="text-align:center"><b id="ch-title"></b></div>
@@ -259,11 +291,11 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
   <div class="topbar"><button class="back" data-back="s-menu">←</button><h2>Skirmish</h2></div>
   <div class="card">
     <label>Opponents</label>
-    <select id="sk-opp"><option value="1">1 warlord</option><option value="2">2 warlords</option><option value="3">3 warlords</option></select>
+    <select id="sk-opp"><option value="1">1 warlord</option><option value="2">2 warlords</option><option value="3">3 warlords</option><option value="4">4 warlords</option><option value="5">5 warlords</option></select>
     <label>Difficulty</label>
     <select id="sk-diff"><option value="1">Tier 1 — Recruit</option><option value="2">Tier 2 — Militia</option><option value="3" selected>Tier 3 — Soldier</option><option value="4">Tier 4 — Veteran</option><option value="5">Tier 5 — Captain</option><option value="6">Tier 6 — Commander</option><option value="7">Tier 7 — General</option><option value="8">Tier 8 — Warlord</option><option value="9">Tier 9 — Conqueror</option><option value="10">Tier 10 — Legend</option></select>
     <label>Map size</label>
-    <select id="sk-size"><option value="9">Small</option><option value="13" selected>Medium</option><option value="17">Large</option></select>
+    <select id="sk-size"><option value="9">Small</option><option value="13" selected>Medium</option><option value="17">Large</option><option value="24">Very large</option></select>
     <button class="btn" id="btn-sk-start">To Battle!</button>
   </div>
 </section>
@@ -271,7 +303,16 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
 <!-- ============ RIVAL DUEL ============ -->
 <section class="screen" id="s-rivals">
   <div class="topbar"><button class="back" data-back="s-menu">←</button><h2>Rival Duel</h2></div>
-  <p class="note">Challenge another player from the shared leaderboard. Their army is commanded by a hard AI "ghost" fighting under their banner — beat it to raid <b>bonus merit</b> and climb past them. (Live head-to-head requires a game server; ghosts keep it fair and always available.)</p>
+  <div class="card" id="pvp-card">
+    <b>⚡ Live Challenge — commanders online now</b>
+    <p class="note" style="margin:6px 0">Everyone active in the last 2 minutes appears here. Pick a name and battle their army under their banner. (Their troops are commanded by a hard AI until real-time head-to-head ships with the server — see the Admin guide.)</p>
+    <div class="row">
+      <select id="pvp-select" class="grow"></select>
+      <button class="back" id="pvp-refresh" title="Refresh who's online">⟳</button>
+    </div>
+    <button class="btn gold" id="btn-pvp-duel" style="width:100%;margin-top:8px">⚡ Challenge this commander</button>
+  </div>
+  <p class="note">Or challenge anyone from the shared leaderboard. Their army is commanded by a hard AI "ghost" fighting under their banner — beat it to raid <b>bonus merit</b> and climb past them.</p>
   <div class="card" id="rival-list"></div>
 </section>
 
@@ -294,8 +335,10 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
     <div id="hud2"><span class="chip" id="hero-chip"></span><span class="chip" id="diff-chip"></span></div>
     <canvas id="cv"></canvas>
     <div id="battle-toast"></div>
+    <div id="battle-big"></div>
     <div class="overlay" id="ov-pause"><div class="panel">
       <h2>Truce called</h2>
+      <p class="note" id="pause-tip"></p>
       <button class="btn" id="btn-resume">Resume battle</button>
       <button class="btn ghost" id="btn-forfeit">Forfeit & retreat</button>
     </div></div>
@@ -307,6 +350,11 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
   </div>
 </section>
 
+</div>
+
+<!-- ============ SAGA EPILOGUE ============ -->
+<div class="overlay" id="ov-epilogue" style="position:fixed;z-index:60">
+  <div class="panel" id="epi-panel" style="max-width:460px;text-align:left"></div>
 </div>
 
 <!-- ============ ADS ============ -->
@@ -328,6 +376,26 @@ table.adm td{padding:6px 4px;border-bottom:1px dashed #d9c9a3;vertical-align:top
    (e.g. 'https://tk3k.yourdomain.com') to enable Google sign-in,
    cloud saves, and a true cross-device leaderboard. See BACKEND-SETUP.md. */
 const BACKEND_URL = '';
+
+/* ====== TEST MODE (launched from the Admin Console Test Lab) ======
+   ?test=1&mode=campaign&saga=shu&level=87&tier=9&speed=2&wonders=3&kingdom=wei
+   Runs a throwaway "Test Pilot" profile: nothing is saved, no merit/XP/leaderboard. */
+const TEST = (()=>{ try{
+  const q = new URLSearchParams(location.search);
+  if(q.get('test')!=='1') return null;
+  return {
+    mode:   q.get('mode')||'campaign',
+    saga:   q.get('saga')||'shu',
+    level:  Math.max(1, Math.min(200, +(q.get('level')||1))),
+    tier:   q.get('tier') ? Math.max(1, Math.min(10, +q.get('tier'))) : null,
+    speed:  q.get('speed') ? +q.get('speed') : null,
+    wonders:(q.get('wonders')!=null && q.get('wonders')!=='') ? Math.max(0, Math.min(5, +q.get('wonders'))) : null,
+    opp:    Math.max(1, Math.min(5, +(q.get('opp')||2))),
+    size:   +(q.get('size')||13),
+    kingdom:q.get('kingdom')||'shu',
+    general:q.get('general')||'',
+  };
+}catch(e){ return null; } })();
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -368,7 +436,7 @@ const KINGDOMS = {
   wei:{name:'Wei 魏', color:'#2f6db3', motto:'Order through power'},
   wu :{name:'Wu 吳',  color:'#c0392b', motto:'Rivers and fire'},
 };
-const ENEMY_COLORS = ['#c0392b','#2f6db3','#d4a017','#7d3c98'];
+const ENEMY_COLORS = ['#c0392b','#2f6db3','#d4a017','#7d3c98','#16808a','#d35400'];
 const NEUTRAL = '#9a938a';
 const GENERALS = [
  // ---- Shu 蜀 ----
@@ -401,7 +469,35 @@ const DEFAULT_ADS = [
   {id:'d1', title:'Your ad here', text:'Configure ads in the Admin Panel (login screen → ⚙).', img:'', url:''},
   {id:'d2', title:'Silk Road Traders', text:'Sample rotational ad — replace me in Admin.', img:'', url:''},
 ];
-const DEFAULT_ADCFG = { enabled:true, banner:true, freq:2, secs:5, rot:8, defaultAd:0, ads: DEFAULT_ADS, music: [], diffAdj:0 };
+const DEFAULT_MUSIC = [
+ {name:'Epic Battle',       url:'https://raw.githubusercontent.com/tomlee111/music/main/kulakovka-battle-epic-274997.mp3'},
+ {name:'Mountain Fight',    url:'https://raw.githubusercontent.com/tomlee111/music/main/the_mountain-epic-490003.mp3'},
+ {name:'Military Warzone',  url:'https://github.com/tomlee111/music/raw/refs/heads/main/desifreemusic-military-warzone-epic-warfare-soundtrack-314012.mp3'},
+ {name:'Happy War Drums',   url:'https://github.com/tomlee111/music/raw/refs/heads/main/india_happy-war-drums-494866.mp3'},
+ {name:'Invasion March',    url:'https://github.com/tomlee111/music/raw/refs/heads/main/luis_humanoide-invasion-march-star-wars-style-cinematic-music-219585.mp3'},
+ {name:'War Drums',         url:'https://github.com/tomlee111/music/raw/refs/heads/main/stereo_color-war-drums-493734.mp3'},
+ {name:'Imperial Battle',   url:'https://github.com/tomlee111/music/raw/refs/heads/main/luis_humanoide-star-wars-style-battle-music-148641.mp3'},
+ {name:'Mountain Epic',     url:'https://github.com/tomlee111/music/raw/refs/heads/main/the_mountain-epic-490003.mp3'},
+];
+const DEFAULT_ADCFG = { enabled:true, banner:true, freq:2, secs:5, rot:8, defaultAd:0, ads: DEFAULT_ADS,
+  music: JSON.parse(JSON.stringify(DEFAULT_MUSIC)), diffAdj:0, wonderMax:1 };
+function normMusic(m,i){
+  if(typeof m==='string') return {name:'Custom track '+(i+1), url:m};
+  return {name: m.name || ('Custom track '+(i+1)), url: m.url};
+}
+/* One-time migration: browsers that saved an ad-config BEFORE the 8 royalty-free MP3s were
+   seeded still carry an empty music list, which silently shadows the new defaults and leaves
+   players on the synthesized tracks. Seed once, then never again — so an admin who later
+   deletes all custom tracks on purpose still gets the documented revert-to-built-ins. */
+async function ensureMusicSeed(){
+  if(!adcfg) return;
+  if((adcfg.musicSeedV||0) >= 2) return;
+  if(!Array.isArray(adcfg.music) || adcfg.music.length===0){
+    adcfg.music = JSON.parse(JSON.stringify(DEFAULT_MUSIC));
+  }
+  adcfg.musicSeedV = 2;
+  try{ await store.set('adcfg', adcfg, true); }catch(e){}
+}
 
 /* ---------------- app state ---------------- */
 let profile = null;         // current player profile
@@ -446,8 +542,31 @@ async function api(path, opts={}){
     headers:{ 'Content-Type':'application/json', ...(cloudToken?{'Authorization':'Bearer '+cloudToken}:{}) , ...(opts.headers||{}) },
     body: opts.body? JSON.stringify(opts.body): undefined,
   });
-  if(!r.ok) throw new Error('API '+r.status);
+  if(!r.ok){ const err = new Error('API '+r.status); err.status = r.status; throw err; }
   return r.json();
+}
+function normalizeProfile(p){
+  p.meritLife = p.meritLife ?? p.merit ?? 0;
+  p.heroXp = p.heroXp||{};
+  p.upg = p.upg||{recruit:0,logi:0,armory:0,fort:0};
+  p.settings = p.settings||{music:true,sfx:true,track:'auto',speed:1};
+  p.settings.speed = p.settings.speed||1;
+  if(!p.campaigns) p.campaigns={shu:{lvl:p.campaign||1,stars:p.stars||{}},wei:{lvl:1,stars:{}},wu:{lvl:1,stars:{}}};
+  const kg = GENERALS.filter(g=>g.k===p.kingdom);
+  if(!kg.some(g=>g.id===p.general)) p.general = kg.length?kg[0].id:'liubei';
+  if(!p.badgesSeen){ const bak=profile; profile=p; p.badgesSeen = earnedBadges(p).map(b=>b.id); profile=bak; }
+  return p;
+}
+async function fetchCloudAdcfg(){
+  if(!BACKEND_URL) return null;
+  try{
+    const out = await api('/api/adcfg');
+    if(out && out.adcfg){
+      await store.set('adcfg', out.adcfg, true); // cache for offline
+      return out.adcfg;
+    }
+  }catch(e){}
+  return null;
 }
 async function initGoogleSignIn(){
   if(!BACKEND_URL) return;
@@ -486,9 +605,15 @@ async function initGoogleSignIn(){
 
 /* ---------------- login ---------------- */
 async function boot(){
-  adcfg = (await store.get('adcfg', true)) || {...DEFAULT_ADCFG};
+  adcfg = (BACKEND_URL ? await fetchCloudAdcfg() : null)
+       || (await store.get('adcfg', true))
+       || JSON.parse(JSON.stringify(DEFAULT_ADCFG));
+  if(adcfg.wonderMax==null) adcfg.wonderMax = 1;
+  await ensureMusicSeed();
+  if(TEST){ launchTest(); return; }
   const last = await store.get('lastUser');
   if(last){ $('#login-name').value = last; }
+  renderRecent();
   try{
     const t = localStorage.getItem('tk3k_session');
     if(t && BACKEND_URL){
@@ -505,6 +630,24 @@ $('#btn-login').onclick = async ()=>{
   const name = $('#login-name').value.trim().replace(/[^\w\- ]/g,'').slice(0,16);
   if(!name){ toast('Enter a commander name first'); return; }
   const pin = $('#login-pin').value;
+  if(BACKEND_URL){
+    if(!pin || pin.length<4){ toast('☁ Cross-device accounts need a passcode (4+ characters)'); return; }
+    try{
+      const out = await api('/api/auth/local', {method:'POST', body:{name, pin}});
+      cloudToken = out.token;
+      try{ localStorage.setItem('tk3k_session', cloudToken); }catch(e){}
+      profile = normalizeProfile(out.profile);
+      await store.set('lastUser', name);
+      toast('☁ Signed in — your progress follows you on every device');
+      renderMenu(); show('s-menu');
+      return;
+    }catch(e){
+      if(e && (e.status===401)){ toast('🔒 Wrong passcode for this commander'); return; }
+      if(e && (e.status===409)){ toast('That name is taken — choose another'); return; }
+      toast('⚠ Server unreachable — playing with this browser\'s local save');
+      // fall through to local login below
+    }
+  }
   const existing = await store.get('player:'+name);
   if(existing && existing.pinHash){
     if(!pin){ toast('🔒 This commander has a passcode'); return; }
@@ -535,9 +678,9 @@ $('#btn-login').onclick = async ()=>{
   await saveProfile();
   renderMenu(); show('s-menu');
 };
-$('#btn-logout').onclick = ()=>{ profile=null; cloudToken=null; try{localStorage.removeItem('tk3k_session');}catch(e){} show('s-login'); };
+$('#btn-logout').onclick = ()=>{ stopPresence(); profile=null; cloudToken=null; try{localStorage.removeItem('tk3k_session');}catch(e){} renderRecent(); show('s-login'); };
 async function saveProfile(){
-  if(!profile) return;
+  if(!profile || profile.isTest) return;   // 🧪 test-mode profiles are throwaway
   if(cloudActive()){
     try{ await api('/api/profile', {method:'PUT', body:{profile}}); }catch(e){}
     return; // server also maintains the leaderboard
@@ -572,6 +715,7 @@ function renderMenu(){
     ${nr?`<p class="note" style="margin:8px 0 0">⬆ ${nr.need} merit to become <b>${nr.title}</b></p>`:'<p class="note">👑 You hold the highest title in the land.</p>'}`;
   renderSoundCard();
   renderQuests();
+  pingPresence();
 }
 $('#btn-campaign').onclick = ()=>{ curChapter = Math.floor((prog(G.saga).lvl-1)/10); renderLevels(); show('s-levels'); };
 $('#btn-skirmish').onclick = ()=> show('s-skirmish');
@@ -595,6 +739,7 @@ const QUEST_DEFS = [
  {id:'chain3',txt:'Launch a 3-city chain attack', target:1,  ev:'chain', reward:40},
  {id:'boss1', txt:'Defeat a boss',                target:1,  ev:'boss',  reward:100},
  {id:'sk1',   txt:'Win a skirmish or duel',       target:1,  ev:'side',  reward:50},
+ {id:'wonder1',txt:'Capture a special city',      target:1,  ev:'wonder',reward:60},
 ];
 function todayQuests(){
   const day = new Date().toISOString().slice(0,10);
@@ -865,8 +1010,119 @@ async function renderRivals(){
     <div class="board-row"><div class="grow"><b>${escapeHtml(n)}</b><br><span class="note">${d.merit} merit · ${d.wins||0} wins</span></div>
     <button class="btn small gold" data-rival="${escapeHtml(n)}">Duel</button></div>`).join('');
   $$('#rival-list [data-rival]').forEach(b=> b.onclick=()=> startRival(b.dataset.rival));
+  renderPvp();
 }
 
+/* ---------------- presence: who's online right now ---------------- */
+let presenceTimer = null;
+async function pingPresence(){
+  if(!profile || profile.isTest) return;
+  if(cloudActive()){
+    try{ await api('/api/presence', {method:'POST', body:{}}); }catch(e){}
+  } else {
+    try{
+      const pr = (await store.get('presence', true)) || {};
+      pr[profile.name] = { t: Date.now(), merit: lifeMerit(profile), rank: rankOf(lifeMerit(profile)) };
+      for(const [n,v] of Object.entries(pr)) if(Date.now()-(v&&v.t||0) > 10*60*1000) delete pr[n]; // prune stale
+      await store.set('presence', pr, true);
+    }catch(e){}
+  }
+  if(!presenceTimer) presenceTimer = setInterval(pingPresence, 45000);
+}
+function stopPresence(){ clearInterval(presenceTimer); presenceTimer = null; }
+async function fetchOnline(){
+  if(cloudActive()){
+    try{
+      const out = await api('/api/online');
+      return (out.online||[]).filter(o=> !profile || o.name!==profile.name);
+    }catch(e){ /* fall back to local presence */ }
+  }
+  const pr = (await store.get('presence', true)) || {};
+  const now = Date.now();
+  return Object.entries(pr)
+    .filter(([n,v])=> now-(v&&v.t||0) < 2*60*1000 && (!profile || n!==profile.name))
+    .map(([name,v])=>({name, merit:(v&&v.merit)||0, rank:(v&&v.rank)||''}))
+    .sort((a,b)=>b.merit-a.merit);
+}
+async function renderPvp(){
+  await pingPresence();
+  const list = await fetchOnline();
+  const sel = $('#pvp-select');
+  if(!sel) return;
+  sel.innerHTML = list.length
+    ? list.map(o=>`<option value="${escapeHtml(o.name)}">${escapeHtml(o.name)} — ✦${o.merit}${o.rank?' · '+escapeHtml(o.rank):''}</option>`).join('')
+    : '<option value="">No commanders online right now — check back soon</option>';
+  const btn = $('#btn-pvp-duel');
+  btn.disabled = !list.length;
+  btn.style.opacity = list.length ? 1 : .55;
+}
+$('#pvp-refresh').onclick = ()=> renderPvp();
+$('#btn-pvp-duel').onclick = ()=>{
+  const n = $('#pvp-select').value;
+  if(!n) { toast('No one is online to challenge right now'); return; }
+  startRival(n);
+};
+
+/* ---------------- recent commanders on this device (multi-player friendly login) ---------------- */
+async function renderRecent(){
+  const el = $('#recent-cmds'); if(!el) return;
+  let names = [];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith('tk3k_P:player:')) names.push(k.slice('tk3k_P:player:'.length));
+    }
+  }catch(e){}
+  if(!names.length){ el.innerHTML=''; return; }
+  const rows = [];
+  for(const n of names.slice(0,12)){
+    const p = await store.get('player:'+n);
+    rows.push({ n, lock: !!(p && p.pinHash), merit: p ? lifeMerit(p) : 0 });
+  }
+  rows.sort((a,b)=>b.merit-a.merit);
+  el.innerHTML = '<label style="margin-top:10px">Commanders on this device — tap to switch</label>' +
+    rows.slice(0,6).map(r=>`<button class="btn ghost small" data-recent="${escapeHtml(r.n)}" style="width:100%;margin:3px 0;text-align:left">${r.lock?'🔒 ':'👤 '}${escapeHtml(r.n)} <span class="note" style="float:right">✦${r.merit}</span></button>`).join('');
+  $$('#recent-cmds [data-recent]').forEach(b=> b.onclick=()=>{
+    $('#login-name').value = b.dataset.recent;
+    $('#login-pin').value = '';
+    $('#login-pin').focus();
+  });
+}
+
+/* ---------------- 🧪 Test Lab launcher (nothing is ever saved) ---------------- */
+function launchTest(){
+  profile = normalizeProfile(defaultProfile('⚙ Test Pilot'));
+  profile.isTest = true;
+  if(KINGDOMS[TEST.kingdom]) profile.kingdom = TEST.kingdom;
+  const kg = GENERALS.filter(g=>g.k===profile.kingdom);
+  profile.general = (TEST.general && kg.some(g=>g.id===TEST.general)) ? TEST.general : kg[0].id;
+  if(TEST.speed && [0.5,0.75,1,1.5,2].includes(TEST.speed)) profile.settings.speed = TEST.speed;
+  if(TEST.wonders!=null) adcfg.wonderMax = TEST.wonders;   // in-memory only — never persisted
+  G.saga = SAGAS[TEST.saga] ? TEST.saga : 'shu';
+  toast('🧪 Test mode — no merit, XP, or leaderboard changes are saved');
+  if(TEST.mode==='skirmish'){
+    $('#sk-opp').value  = String(TEST.opp);
+    $('#sk-diff').value = String(TEST.tier||3);
+    $('#sk-size').value = [9,13,17,24].includes(TEST.size) ? String(TEST.size) : '13';
+    startSkirmish();
+  } else if(TEST.mode==='weekly'){
+    startWeekly();
+  } else {
+    startCampaign(TEST.level);
+  }
+}
+
+const TIPS = [
+ 'Chain attacks win sieges: sweep through 3–4 of your cities and release on the target — the combined wave cracks garrisons no single city could.',
+ 'Neutral gray cities never grow. Take them early and cheaply before turning on the enemy.',
+ 'Never leave your capital empty — a single enemy raid can end the battle.',
+ 'The Great Beacon 🏮 gives its holder +15% recruiting. Fight for it like a second capital.',
+ 'Stuck on a level? Lose twice, salvage the merit, buy a War Council upgrade, and return stronger.',
+ 'On boss battles, watch the briefing: every boss ability has a counter. Twin Strike hates a strong center; Patient Defense hates early pressure.',
+ 'Forts grow slowly but defend well. Capitals grow fastest — always contest them.',
+ 'A fleeing boss carries every soldier he has. Intercepting the escape at his destination can end the battle in one blow.',
+];
+function randomTip(){ return TIPS[Math.floor(Math.random()*TIPS.length)]; }
 /* Admin controls moved to the separate admin.html console. */
 
 /* ---------------- campaign story (original text) ---------------- */
@@ -936,6 +1192,77 @@ const CHAPTERS_WU = [
  {t:'The Last Chancellors', s:'Purges and counter-purges hollow the court while the north grows patient and fat. Steady the ship.'},
  {t:'Rivers Hold the Realm', s:'Everything ends, but not today. Man the watchtowers, trust the river, and make the north pay for every crossing.'},
 ];
+const CH_DETAIL = {
+shu: [
+ 'The Han court is paralyzed while Yellow Turban rebels burn granaries across the north. Rally the volunteer brothers, relieve the besieged towns, and prove that loyalty still has an army.',
+ 'Dong Zhuo has seized the boy emperor and rules the capital through terror. Join the loyalist cause and carve a path toward Luoyang before all resistance is stamped out.',
+ 'Eighteen warlords camp under one oath but scheme under eighteen banners. Hold the coalition line at the passes and force the tyrant out of the capital.',
+ 'With the tyrant dead, his killers and heirs tear the northwest apart, and the Flying General sells terror to any buyer. Survive the chaos and secure a foothold of your own.',
+ 'Cao Cao now shelters the emperor and issues edicts in his name. Outmaneuver the northern court and keep your small army from being swallowed by it.',
+ 'The Central Plains have become a chessboard of shifting alliances. Win grain, walls, and reputation — the only currencies every future claim will accept.',
+ 'Yuan Shao and Cao Cao grind against each other at Guandu, and every neighbor must choose a side. Strike where the giants are not looking and grow while they bleed.',
+ 'Cao Cao turns south with the united north behind him, and a river of refugees follows your banner. Fight rearguard actions and buy the people time to escape.',
+ 'At the Red Cliffs the southern alliance stakes everything on fire and wind. Break the northern armada and end the dream of easy conquest.',
+ 'Victory has turned allies into rivals over the rivers and granaries of Jing. Claim the contested commanderies before friendship curdles into war.',
+ 'The western cavalry shatters at Tong Pass, scattering exiles — and opportunity. Gather the broken pieces of the west to your cause.',
+ 'Yizhou lies rich, complacent, and badly led. March the plank roads, win the passes, and take the Riverlands as your kingdom\'s true foundation.',
+ 'Hanzhong is the gate between your new kingdom and the northern empire. Seize the mountain passes and crown the campaign at Dingjun Mountain.',
+ 'Guan Yu floods seven armies at Fancheng and the whole north trembles — but knives wait upstream. Press the advantage before the alliance snaps shut behind you.',
+ 'Jing is lost, the oath brothers are gone, and grief marches east wearing an emperor\'s armor. Weather the fire at Yiling and save what can still be saved.',
+ 'With the east quiet, rebellion flares among the southern tribes. Pacify the hills with patience as much as spears, and secure the rear for the great task ahead.',
+ 'The Northern Expeditions begin: out of the Qi Mountains against an empire ten times your size. Take the beacon towers one by one and keep the grain moving.',
+ 'At the Wuzhang Plains the Prime Minister\'s lamp burns low. Win the autumn campaign he planned, and carry the dream past a falling star.',
+ 'The old guard is gone, and the Sima family strangles the north from inside its own court. Exploit their purges and keep the northern passes contested.',
+ 'One final campaign will decide whether an oath sworn in a peach garden meant anything at all. Unite the land, and let the rivers rest.',
+],
+wei: [
+ 'The capital rots under a tyrant while honest men wait for someone else to move first. Raise your own volunteers and show the realm that action beats pedigree.',
+ 'The tyrant burns Luoyang and drags the court west while the coalition feasts. Pursue the column alone, and survive the ambush that teaches you patience.',
+ 'An army without granaries is only a mob. Take Yan Province, absorb the surrendered rebel veterans, and forge refugees into the realm\'s hardest infantry.',
+ 'Old blood-debts in the east demand answer, and rivals circle your base while you march. Settle the eastern account without losing the home you built.',
+ 'The emperor wanders half-starved between warlords. Bring the Son of Heaven under your protection at Xu, and let every future edict carry your intent.',
+ 'A surrendered city rises against you in the night and costs you kin and your fiercest guard. Retake Wan, bury the dead, and never mistake surrender for loyalty again.',
+ 'The Flying General has stolen Xuzhou and finally run out of friends. Corner him at Xiapi, flood the walls, and end the age of freelance terror.',
+ 'Yuan Shao brings the greatest host of the age to Guandu expecting surrender. Hold the fords, burn his grain at Wuchao, and break the colossus.',
+ 'The Yuan heirs squabble over their father\'s half-dead empire. Sweep the four northern provinces and ride beyond the frontier to finish the work.',
+ 'The south laughs behind its great river, and your new fleet burns at the Red Cliffs. Retreat in good order, hold the Huai line, and rebuild what the fire took.',
+ 'Vengeance storms Tong Pass with the finest cavalry in the west. Divide the coalition with letters and rumor, then break it in the open field.',
+ 'Hanzhong falls easily; keeping it against the west is the true war. Fight the mountain campaign, and learn when a province is better traded than bled for.',
+ 'Titles pile on you faster than trust, and conspiracies bloom in the palace shade. Crush the plots at court while holding three frontiers at once.',
+ 'Autumn floods drown seven armies and a red-faced god of war batters Fancheng\'s gates. Hold the fortress, turn Wu against its ally, and break the myth.',
+ 'Four centuries of Han rule end, and a new dynasty must prove it deserves the mandate. Defend the succession against every lord who smells weakness.',
+ 'From the western mountains, the expeditions come like the seasons. Trade space for time, guard the granaries, and let genius exhaust itself against stone.',
+ 'The dragon of the west rises again and again from the Qi Mountains. Refuse him the decisive battle he needs, and win by outliving him.',
+ 'A far northern lord crowns himself, betting that distance is armor. March a thousand li through rain and mud to collect the crown.',
+ 'Boy emperors and rival regents make the palace the most dangerous front. Navigate the purges and keep the army loyal to the realm, not to factions.',
+ 'The rivals are spent and the roads rebuilt; only endurance remains to be proven. Finish the century\'s war and bring every banner under one.',
+],
+wu: [
+ 'The Tiger of Jiangdong charges first at every wall, and the south begins to whisper his name. Follow the vanguard through the campaign against the tyrant.',
+ 'In the ashes of Luoyang a well yields the Imperial Jade Seal — a treasure that marks its holder for every knife in the realm. Guard the prize and the family that carries it.',
+ 'With a borrowed thousand and a sworn friend, the young conqueror crosses the river to take a homeland. Seize Jiangdong before the old lords can unite against you.',
+ 'Six districts, six garrisons, six proud governors. Bring the riverlands under one banner, and rule what was won fiercely with a gentle hand.',
+ 'An assassin\'s arrow ends the Little Conqueror at twenty-six. Steady the generals, trust the young admiral, and prove a younger brother can hold a kingdom.',
+ 'The man who owes your family a blood debt hides behind the river forts of Xiakou. Break the fortresses and collect what is owed.',
+ 'The northern colossus demands your son as hostage and your fleet as tribute. Refuse, join hands with the fugitives of the west, and prepare the river for war.',
+ 'Chained warships darken the Yangtze and the north expects a coronation. Wait for the east wind, send in the fire ships, and write the turning point of the age.',
+ 'Red Cliffs won the war; the peace over Jing Province may yet lose it. Press your claim to the river commanderies before the lent land becomes a legend.',
+ 'Guan Yu strips Jing\'s garrisons for his northern war and insults every envoy you send. Dress your soldiers as merchants in white, and take the province without a battle.',
+ 'At Hefei, eight hundred northern veterans rout your vanguard at the ford. Learn the border\'s hard lesson, and turn humiliation into discipline.',
+ 'A grieving emperor marches east with everything the west can raise. Give ground for seven hundred li — then let a young scholar-general answer with fire.',
+ 'The river realm crowns its own Son of Heaven, and three suns now burn over one land. Legitimize the new throne with victories, canals, and full granaries.',
+ 'The hill tribes raid from the mists and melt away before your columns. Pacify the hills with rice and patience, and recruit their fiercest into the army.',
+ 'Hefei\'s stone walls defy fleet after fleet. Probe the northern border, keep the pressure honest, and never again bet the fleet against a wall.',
+ 'Your admirals sail past the edge of every chart, seeking islands and allies across the sea. Fund the expeditions and make the ocean Wu\'s second empire.',
+ 'Two princes divide the court, and every appointment becomes a battlefield. Steer the succession without letting the factions bleed the state white.',
+ 'The founding generation is dying, and ambitious regents circle the young heir. Hold the center while old tigers and young wolves test the throne.',
+ 'Purges hollow the chancellery while the north grows patient and fat. Steady the ship of state and keep the river defenses manned.',
+ 'Everything ends, but not today. Man the watchtowers, trust the Yangtze, and make the north pay dearly for every attempted crossing.',
+]};
+function detailFor(saga, ch){
+  const d = CH_DETAIL[saga] || CH_DETAIL.shu;
+  return d[Math.min(ch, d.length-1)];
+}
 function chaptersFor(saga){ return saga==='wei'?CHAPTERS_WEI : saga==='wu'?CHAPTERS_WU : CHAPTERS; }
 const SAGAS = {shu:{name:'Shu Saga',icon:'\u8700'}, wei:{name:'Wei Saga',icon:'\u9b4f'}, wu:{name:'Wu Saga',icon:'\u5433'}};
 const FLAVOR = [
@@ -1126,12 +1453,12 @@ const AudioSys = {
     }catch(e){}
   },
   allTracks(){
-    const custom = (adcfg.music||[]).map((u,i)=>({name:'Custom track '+(i+1), url:u}));
+    const custom = (adcfg.music||[]).map(normMusic);
     return [...this.tracks, ...custom];
   },
   // The pool auto-rotate actually cycles through: custom tracks only if any exist, else the built-ins.
   rotationPool(){
-    const custom = (adcfg.music||[]).map((u,i)=>({name:'Custom track '+(i+1), url:u}));
+    const custom = (adcfg.music||[]).map(normMusic);
     return custom.length ? custom : this.tracks;
   },
   playMusic(){
@@ -1232,7 +1559,9 @@ const AudioSys = {
 document.addEventListener('click', e=>{ if(e.target.closest('.btn,.back,.hbtn,.lvl,.general,.fac')) AudioSys.sfx('tap'); }, true);
 document.addEventListener('pointerdown', ()=>AudioSys.init(), {once:true});
 async function renderSoundCard(){
-  adcfg = (await store.get('adcfg', true)) || adcfg || {...DEFAULT_ADCFG}; // pick up admin changes live
+  adcfg = (BACKEND_URL ? await fetchCloudAdcfg() : null)
+       || (await store.get('adcfg', true)) || adcfg || JSON.parse(JSON.stringify(DEFAULT_ADCFG)); // pick up admin changes live
+  await ensureMusicSeed();
   const st = AudioSys.st();
   $('#set-music').checked = st.music; $('#set-sfx').checked = st.sfx;
   const sel = $('#set-track');
@@ -1271,7 +1600,7 @@ window.addEventListener('resize', resize);
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 
 const G = {
-  active:false, paused:false, nodes:[], armies:[], t:0, lastTs:0,
+  active:false, paused:false, nodes:[], armies:[], parts:[], clouds:[], t:0, lastTs:0,
   colors:{}, mode:'campaign', level:1, par:60, ai:[], deco:null,
   mods:{growth:1,speed:1,atk:1,send:0.5}, endCb:null, rivalName:null, saga:'shu',
 };
@@ -1346,7 +1675,8 @@ function randomMap(count, enemies, seed, boost=1){
   let guard=0;
   while(pts.length<count && guard++<4000){
     const p={x:.08+rnd()*.84, y:.06+rnd()*.88};
-    if(pts.every(q=> (q.x-p.x)**2 + ((q.y-p.y)*0.7)**2 > 0.028)) pts.push(p);
+    const minD = count>=20 ? 0.019 : count>=16 ? 0.024 : 0.028;
+    if(pts.every(q=> (q.x-p.x)**2 + ((q.y-p.y)*0.7)**2 > minD)) pts.push(p);
   }
   pts.sort((a,b)=>b.y-a.y);
   G.nodes=[];
@@ -1360,11 +1690,18 @@ function randomMap(count, enemies, seed, boost=1){
     const p=pts[i];
     G.nodes.push(mkNode(p.x,p.y,'N', 6+Math.floor(rnd()*12), rnd()<0.25?'fort':'city'));
   }
-  if(count>=12){
-    const neutrals = G.nodes.filter(n=>n.owner==='N');
-    if(neutrals.length){
-      const mid = neutrals.sort((a,b)=> Math.abs(a.ny-0.5)-Math.abs(b.ny-0.5))[0];
-      mid.wonder = 'Great Beacon'; mid.troops = Math.max(mid.troops, 14); mid.cap = 70;
+  // contested Special Cities on medium+ maps (admin-configurable count, default 1)
+  const maxW = Math.max(0, Math.min(5, (adcfg && adcfg.wonderMax!=null)? +adcfg.wonderMax : 1));
+  if(maxW>0 && count>=12){
+    const neutrals = G.nodes.filter(n=>n.owner==='N')
+      .sort((a,b)=> Math.abs(a.ny-0.5)-Math.abs(b.ny-0.5)); // most central first
+    const k = Math.min(maxW, neutrals.length, 1+Math.floor(neutrals.length/5));
+    const types = [...WONDER_TYPES];
+    for(let w=0; w<k; w++){
+      const t = types.splice(Math.floor(rnd()*types.length),1)[0];
+      const node = neutrals[Math.floor(w*neutrals.length/Math.max(1,k))]; // spread across the map
+      node.wonder = t.name; node.wonderId = t.id;
+      node.troops = Math.max(node.troops, 14); node.cap = 70;
     }
   }
 }
@@ -1441,6 +1778,7 @@ function startRival(name){
 }
 function setupAI(tier){
   tier = Math.max(1, Math.min(10, Math.round(tier + (+adcfg.diffAdj||0)))); // admin can shift ±3
+  if(TEST && TEST.tier) tier = TEST.tier;                                    // 🧪 Test Lab forces an exact tier
   G.tier = tier;
   const owners = new Set(G.nodes.filter(n=>n.owner.startsWith('E')).map(n=>n.owner));
   G.eGrow = 0.68 + tier*0.052;                 // enemy recruit speed  0.73 → 1.20
@@ -1461,9 +1799,10 @@ function beginBattle(title, story){
   const hg = GENERALS.find(g=>g.id===profile.general) || GENERALS[0];
   const hx = heroXP(hg.id);
   $('#hero-chip').innerHTML = `<span class="mini">${portrait(hg.id)}</span> ${hg.name} · Lv${G.heroLvl} · ${hx%60}/60 XP`;
-  $('#diff-chip').textContent = '⚔ ' + (G.diffLabel||'Battle');
+  $('#diff-chip').textContent = (TEST?'🧪 TEST · ':'') + '⚔ ' + (G.diffLabel||'Battle')
+    + (G.weather && G.weather.icon ? ' · ' + G.weather.icon : '');
   $('#btn-speed').textContent = (profile.settings.speed||1)+'×';
-  G.heat = 0; G.intensity = 0; G.pShare = null;
+  G.heat = 0; G.intensity = 0; G.pShare = null; G.lostCity = false; G.echo = [];
   AudioSys.onBattle();
   if(story && story.chd){
     G.paused=true; showStory(story, ()=>{ G.paused=false; G.lastTs=0; battleToast(title); });
@@ -1476,17 +1815,24 @@ function showStory(L, cb){
     <span class="chapter-tag">Chapter ${L.ch+1} · Battle ${L.idx+1} of 10</span>
     <h2 style="margin:10px 0 4px">${L.chd.t}</h2>
     <div class="story-port" style="background:${KINGDOMS[profile.kingdom].color}">${portrait(g.id)}</div>
-    ${L.idx===0?`<p style="margin:6px 0">${L.chd.s}</p>`:''}
+    ${L.idx===0?`<p style="margin:6px 0"><i>${L.chd.s}</i></p>`:''}
+    <p class="note" style="text-align:left;margin:8px 0">${detailFor(G.saga, L.ch)}</p>
     <p class="story-line">"${FLAVOR[(L.n*7)%FLAVOR.length]}" — ${g.name.split(' ')[0]} ${g.name.split(' ')[1]||''}</p>
     ${G.bossName?`<p style="margin:6px 0">Enemy commander: <b>${G.bossName}</b></p>`:''}
     ${L.boss?'<p style="color:var(--seal)"><b>⚔ An enemy warlord takes the field in person. Expect a hardened garrison.</b></p>':''}
-    ${G.bossAbil?`<p style="color:var(--seal)">👹 Boss ability — <b>${ABILITIES[G.bossAbil.type].name}</b>: ${ABILITIES[G.bossAbil.type].desc}.</p>`:''}`;
+    ${G.bossAbil?`<p style="color:var(--seal)">👹 Boss ability — <b>${ABILITIES[G.bossAbil.type].name}</b>: ${ABILITIES[G.bossAbil.type].desc}.</p>`:''}
+    ${G.nodes.some(n=>n.wonder)?`<p class="note" style="text-align:left">✨ Special cities on this map: ${G.nodes.filter(n=>n.wonder).map(n=>{const w=WONDER_TYPES.find(x=>x.id===n.wonderId);return `${w.icon} <b>${w.name}</b> (${w.desc})`;}).join('; ')}</p>`:''}`;
   const ov=$('#ov-story'); ov.classList.add('active');
   $('#btn-story-go').onclick = ()=>{ ov.classList.remove('active'); cb(); };
 }
 let btT=null;
 function battleToast(msg){ const t=$('#battle-toast'); t.textContent=msg; t.style.opacity=1;
   clearTimeout(btT); btT=setTimeout(()=>t.style.opacity=0, 2200); }
+let bigT=null;
+function bigToast(msg){
+  const t=$('#battle-big'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(bigT); bigT=setTimeout(()=>t.classList.remove('show'), 2400);
+}
 
 /* ---------- decorative background ---------- */
 function makeDeco(){
@@ -1494,17 +1840,34 @@ function makeDeco(){
   const c=off.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0);
   const rnd=mulberry32(G.level*77+13);
   const ch = G.mode==='campaign'? Math.floor((G.level-1)/10) : (G.level*3)%20;
+  /* --- season varies by chapter: spring → summer → autumn → winter, then repeats --- */
+  const season = ['spring','summer','autumn','winter'][ch % 4];
+  G.season = season;
+  const PAL = { spring:['#eef0d0','#e0e6b2'], summer:['#f2e7cc','#e9dab4'],
+                autumn:['#f2e2bd','#ecd09a'], winter:['#eceff1','#dde3e6'] }[season];
   const grad=c.createLinearGradient(0,0,0,CH);
-  grad.addColorStop(0,'#f2e7cc'); grad.addColorStop(1,'#e9dab4');
+  grad.addColorStop(0,PAL[0]); grad.addColorStop(1,PAL[1]);
   c.fillStyle=grad; c.fillRect(0,0,CW,CH);
+  /* --- time-of-day tint varies by level: dawn, day, dusk --- */
+  const tod = ['day','dawn','dusk'][G.level % 3];
+  if(tod!=='day'){
+    const tg=c.createLinearGradient(0,0,0,CH);
+    if(tod==='dawn'){ tg.addColorStop(0,'rgba(255,198,128,.15)'); tg.addColorStop(1,'rgba(255,198,128,0)'); }
+    else            { tg.addColorStop(0,'rgba(198,110,120,.16)'); tg.addColorStop(1,'rgba(120,84,140,.06)'); }
+    c.fillStyle=tg; c.fillRect(0,0,CW,CH);
+  }
   /* --- scenery glyphs (all drawn, original) --- */
   const peak=(x,y,sz,snow)=>{ c.strokeStyle='rgba(90,75,60,.38)'; c.lineWidth=2.5;
     c.beginPath(); c.moveTo(x-sz,y+sz*.65); c.lineTo(x,y-sz*.75); c.lineTo(x+sz,y+sz*.65); c.stroke();
     if(snow){ c.strokeStyle='rgba(255,255,255,.85)'; c.lineWidth=2;
       c.beginPath(); c.moveTo(x-sz*.28,y-sz*.3); c.lineTo(x,y-sz*.75); c.lineTo(x+sz*.28,y-sz*.3); c.stroke(); } };
-  const tree=(x,y,sz)=>{ c.fillStyle='rgba(70,110,70,.45)';
+  const foliage = { spring:'rgba(104,146,88,.45)', summer:'rgba(70,110,70,.45)',
+                    autumn:'rgba(176,112,48,.5)', winter:'rgba(84,106,96,.42)' }[season];
+  const tree=(x,y,sz)=>{ c.fillStyle=foliage;
     c.beginPath(); c.moveTo(x-sz,y); c.lineTo(x,y-sz*1.8); c.lineTo(x+sz,y); c.closePath(); c.fill();
     c.beginPath(); c.moveTo(x-sz*.8,y-sz*.7); c.lineTo(x,y-sz*2.3); c.lineTo(x+sz*.8,y-sz*.7); c.closePath(); c.fill();
+    if(season==='winter'){ c.strokeStyle='rgba(255,255,255,.8)'; c.lineWidth=1.6;
+      c.beginPath(); c.moveTo(x-sz*.45,y-sz*1.45); c.lineTo(x,y-sz*2.3); c.lineTo(x+sz*.45,y-sz*1.45); c.stroke(); }
     c.fillStyle='rgba(90,60,40,.5)'; c.fillRect(x-1.5,y,3,4); };
   const tower=(x,y)=>{
     // two-tier pagoda with red columns and upswept roofs
@@ -1538,6 +1901,42 @@ function makeDeco(){
     c.strokeStyle='rgba(95,60,40,.65)'; c.lineWidth=1.5;
     c.beginPath(); c.moveTo(x,y-2); c.lineTo(x,y-11); c.stroke();
     c.fillStyle='rgba(210,200,170,.75)'; c.beginPath(); c.moveTo(x,y-11); c.lineTo(x+8,y-4); c.lineTo(x,y-4); c.closePath(); c.fill(); };
+  /* --- new set-pieces: blossom tree, bamboo, paifang gate, stone lantern, fishing hut, beacon tower --- */
+  const blossom=(x,y)=>{ c.strokeStyle='rgba(110,80,60,.6)'; c.lineWidth=2.2;
+    c.beginPath(); c.moveTo(x,y); c.quadraticCurveTo(x+3,y-10,x-2,y-18); c.stroke();
+    c.beginPath(); c.moveTo(x-1,y-9); c.quadraticCurveTo(x-8,y-13,x-11,y-19); c.stroke();
+    c.fillStyle = season==='autumn' ? 'rgba(214,150,64,.75)' : 'rgba(238,182,198,.8)';
+    for(const [bx,by,r2] of [[-2,-19,5],[-11,-20,4],[4,-14,4],[-6,-13,3.5],[1,-23,3.5]]){
+      c.beginPath(); c.arc(x+bx,y+by,r2,0,7); c.fill(); } };
+  const bamboo=(x,y)=>{ for(let s2=0;s2<3;s2++){ const bx=x+s2*6-6;
+      c.strokeStyle='rgba(96,140,86,.7)'; c.lineWidth=2.4;
+      c.beginPath(); c.moveTo(bx,y); c.lineTo(bx+2,y-22-s2*3); c.stroke();
+      c.strokeStyle='rgba(70,105,62,.7)'; c.lineWidth=1.2;
+      for(let seg=1;seg<4;seg++){ c.beginPath(); c.moveTo(bx-2+seg*0.6,y-seg*6); c.lineTo(bx+4,y-seg*6); c.stroke(); }
+      c.strokeStyle='rgba(96,140,86,.6)'; c.lineWidth=1.4;
+      c.beginPath(); c.moveTo(bx+2,y-20-s2*3); c.lineTo(bx+9,y-24-s2*3); c.moveTo(bx+2,y-16-s2*3); c.lineTo(bx-5,y-20-s2*3); c.stroke(); } };
+  const paifang=(x,y)=>{ c.strokeStyle='rgba(150,55,45,.8)'; c.lineWidth=3;
+    c.beginPath(); c.moveTo(x-11,y); c.lineTo(x-11,y-16); c.moveTo(x+11,y); c.lineTo(x+11,y-16); c.stroke();
+    c.fillStyle='rgba(120,55,45,.8)';
+    c.beginPath(); c.moveTo(x-17,y-16); c.quadraticCurveTo(x,y-23,x+17,y-16); c.lineTo(x+14,y-19); c.quadraticCurveTo(x,y-25,x-14,y-19); c.closePath(); c.fill();
+    c.fillStyle='rgba(201,162,39,.85)'; c.fillRect(x-6,y-15,12,4); };
+  const lantern=(x,y)=>{ c.fillStyle='rgba(130,125,115,.75)';
+    c.fillRect(x-1.5,y-6,3,6); c.fillRect(x-5,y-1,10,2);
+    c.beginPath(); c.moveTo(x-6,y-6); c.quadraticCurveTo(x,y-11,x+6,y-6); c.closePath(); c.fill();
+    c.fillStyle='rgba(242,214,150,.85)'; c.fillRect(x-2.5,y-8.5,5,3); };
+  const hut=(x,y)=>{ c.fillStyle='rgba(190,170,130,.7)'; c.fillRect(x-7,y-7,14,7);
+    c.fillStyle='rgba(120,90,60,.75)';
+    c.beginPath(); c.moveTo(x-10,y-7); c.lineTo(x,y-14); c.lineTo(x+10,y-7); c.closePath(); c.fill();
+    c.fillStyle='rgba(70,50,35,.7)'; c.fillRect(x-2,y-4,4,4);
+    c.strokeStyle='rgba(90,75,60,.55)'; c.lineWidth=1.4;
+    c.beginPath(); c.moveTo(x+9,y); c.lineTo(x+16,y-8); c.stroke(); };
+  const beacon=(x,y)=>{ c.strokeStyle='rgba(110,95,75,.8)'; c.lineWidth=2.2;
+    c.beginPath(); c.moveTo(x-6,y); c.lineTo(x-3,y-16); c.moveTo(x+6,y); c.lineTo(x+3,y-16); c.stroke();
+    c.fillStyle='rgba(110,95,75,.8)'; c.fillRect(x-5,y-19,10,4);
+    c.fillStyle='rgba(226,120,50,.85)';
+    c.beginPath(); c.moveTo(x-3,y-19); c.quadraticCurveTo(x,y-26,x+3,y-19); c.closePath(); c.fill();
+    c.fillStyle='rgba(120,120,120,.35)';
+    for(let s2=0;s2<3;s2++){ c.beginPath(); c.arc(x+2+s2*3,y-28-s2*7,3+s2*1.5,0,7); c.fill(); } };
   /* --- river with banks, ripples --- */
   const riverPts=[];
   let rx=CW*(.12+rnd()*.76), ry=-20;
@@ -1547,6 +1946,7 @@ function makeDeco(){
     c.beginPath(); riverPts.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y)); c.stroke(); };
   drawRiver(28,'rgba(120,150,170,.22)');
   drawRiver(15,'rgba(105,140,175,.45)');
+  G.riverPts = riverPts;
   c.strokeStyle='rgba(255,255,255,.4)'; c.lineWidth=1.5;
   for(let i=1;i<riverPts.length-1;i+=2){ const p=riverPts[i];
     c.beginPath(); c.moveTo(p.x-6,p.y); c.quadraticCurveTo(p.x,p.y-3,p.x+6,p.y); c.stroke(); }
@@ -1585,12 +1985,38 @@ function makeDeco(){
   }
   /* --- watchtowers / small castles --- */
   for(let i=0;i<2+Math.floor(rnd()*2);i++) tower(50+rnd()*(CW-100), 120+rnd()*(CH-220));
+  /* --- extra set-pieces, a different mix each level --- */
+  if(season==='spring' || rnd()<.35) for(let i=0;i<2;i++) blossom(50+rnd()*(CW-100), 130+rnd()*(CH-230));
+  if(rnd()<.6) bamboo(50+rnd()*(CW-100), CH*0.45+rnd()*(CH*0.4));
+  if(rnd()<.5) paifang(60+rnd()*(CW-120), 140+rnd()*(CH-250));
+  for(let i=0;i<1+Math.floor(rnd()*2);i++) lantern(50+rnd()*(CW-100), 150+rnd()*(CH-230));
+  if(rnd()<.55){ const p=riverPts[2+Math.floor(rnd()*Math.max(1,riverPts.length-4))];
+    if(p) hut(p.x+(rnd()<.5?-1:1)*(26+rnd()*20), p.y+(rnd()-.5)*30); }
+  if([1,2,16,17].includes(ch) || rnd()<.3) beacon(50+rnd()*(CW-100), 110+rnd()*(CH*0.35));
+  if(season==='winter'){ /* snow drifts on the ground */
+    c.fillStyle='rgba(255,255,255,.4)';
+    for(let i=0;i<7;i++){ const sx=rnd()*CW, sy=CH*0.3+rnd()*(CH*0.65);
+      c.beginPath(); c.ellipse(sx,sy,18+rnd()*26,4+rnd()*3,0,0,7); c.fill(); } }
   /* --- enemy war camps toward the top of the map --- */
   for(let i=0;i<3;i++) tent(50+rnd()*(CW-100), 90+rnd()*(CH*0.28));
   /* --- boats on the river --- */
   for(let i=0;i<2;i++){ const p=riverPts[2+Math.floor(rnd()*(Math.max(1,riverPts.length-4)))]; if(p) boat(p.x,p.y); }
-  /* --- sky: drifting clouds and cranes --- */
-  for(let i=0;i<3;i++) cloud(30+rnd()*(CW-60), 55+rnd()*70, 9+rnd()*8);
+  /* --- sun disc glowing in the corner --- */
+  const sunX=CW*0.84, sunY=CH*0.12;
+  const sg=c.createRadialGradient(sunX,sunY,4,sunX,sunY,70);
+  sg.addColorStop(0,'rgba(242,214,150,.5)'); sg.addColorStop(1,'rgba(242,214,150,0)');
+  c.fillStyle=sg; c.fillRect(sunX-80,sunY-80,160,160);
+  c.fillStyle='rgba(245,222,160,.85)'; c.beginPath(); c.arc(sunX,sunY,17,0,7); c.fill();
+  c.strokeStyle='rgba(200,160,80,.4)'; c.lineWidth=1.5; c.stroke();
+  /* --- mist bands in the middle distance --- */
+  for(const my of [CH*0.34, CH*0.62]){
+    const mg=c.createLinearGradient(0,my-22,0,my+22);
+    mg.addColorStop(0,'rgba(255,255,255,0)'); mg.addColorStop(.5,'rgba(255,255,255,.1)'); mg.addColorStop(1,'rgba(255,255,255,0)');
+    c.fillStyle=mg; c.fillRect(0,my-22,CW,44);
+  }
+  /* --- sky: cranes; clouds drift live, drawn each frame --- */
+  G.clouds = [];
+  for(let i=0;i<3;i++) G.clouds.push({x:30+rnd()*(CW-60), y:50+rnd()*75, s:9+rnd()*8, v:3+rnd()*5});
   for(let i=0;i<3;i++) bird(40+rnd()*(CW-80), 60+rnd()*90, 4+rnd()*3);
   /* --- Great Wall snakes across the north in frontier chapters --- */
   if([1,2,16,17].includes(ch)){
@@ -1617,7 +2043,67 @@ function makeDeco(){
   }
   c.font='120px "Noto Serif SC", serif'; c.fillStyle='rgba(90,70,50,.06)';
   c.fillText('天下', CW*0.55, CH*0.5);
+  /* --- live weather, seeded per level and biased by the season --- */
+  const wpool = { spring:['clear','petals','petals','rain','fog'],
+                  summer:['clear','clear','rain','storm'],
+                  autumn:['clear','leaves','leaves','fog','rain'],
+                  winter:['snow','snow','clear','fog'] }[season];
+  const wt = wpool[Math.floor(rnd()*wpool.length)];
+  const WICON = {clear:'', petals:'🌸', rain:'🌧', storm:'⛈', fog:'🌫', snow:'❄', leaves:'🍂'};
+  G.weather = { type: wt, icon: WICON[wt] };
+  G.wparts = []; G.fogs = [];
+  if(wt==='rain' || wt==='storm'){
+    const n = wt==='storm' ? 90 : 55;
+    for(let i=0;i<n;i++) G.wparts.push({x:rnd()*CW, y:rnd()*CH, len:9+rnd()*8, spd:340+rnd()*160, dx:wt==='storm'?-70:-28});
+  } else if(wt==='snow'){
+    for(let i=0;i<60;i++) G.wparts.push({x:rnd()*CW, y:rnd()*CH, r:1.2+rnd()*2.2, spd:22+rnd()*26, amp:10+rnd()*18, ph:rnd()*7});
+  } else if(wt==='petals' || wt==='leaves'){
+    for(let i=0;i<26;i++) G.wparts.push({x:rnd()*CW, y:rnd()*CH, r:2+rnd()*2.5, spd:16+rnd()*20, amp:22+rnd()*30, ph:rnd()*7, rot:rnd()*7});
+  }
+  if(wt==='fog') for(let i=0;i<3;i++) G.fogs.push({y:CH*(0.25+rnd()*0.55), h:34+rnd()*34, spd:8+rnd()*10, ph:rnd()*900});
   G.deco = off;
+}
+/* ---------- live weather rendering (deterministic from G.t — pauses with the game) ---------- */
+function drawWeather(){
+  const w = G.weather; if(!w || w.type==='clear') return;
+  const t = G.t;
+  if(w.type==='rain' || w.type==='storm'){
+    ctx.strokeStyle = w.type==='storm' ? 'rgba(90,110,140,.5)' : 'rgba(120,140,165,.4)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for(const p of G.wparts){
+      const y = ((p.y + t*p.spd) % (CH+30)) - 15;
+      const x = ((p.x + t*p.dx) % (CW+40) + CW+40) % (CW+40) - 20;
+      ctx.moveTo(x, y); ctx.lineTo(x + p.dx*0.035, y + p.len);
+    }
+    ctx.stroke();
+    if(w.type==='storm'){
+      const ph = (t*0.23) % 1;                         // brief flash roughly every ~4.3s
+      if(ph < 0.05){ ctx.fillStyle = `rgba(255,255,240,${0.28*(1-ph/0.05)})`; ctx.fillRect(0,0,CW,CH); }
+    }
+  } else if(w.type==='snow'){
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    for(const p of G.wparts){
+      const y = ((p.y + t*p.spd) % (CH+16)) - 8;
+      const x = ((p.x + Math.sin(t*0.7 + p.ph)*p.amp) % (CW+16) + CW+16) % (CW+16) - 8;
+      ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fill();
+    }
+  } else if(w.type==='petals' || w.type==='leaves'){
+    ctx.fillStyle = w.type==='petals' ? 'rgba(238,182,198,.85)' : 'rgba(196,126,54,.85)';
+    for(const p of G.wparts){
+      const y = ((p.y + t*p.spd) % (CH+20)) - 10;
+      const x = ((p.x + Math.sin(t*0.9 + p.ph)*p.amp + t*10) % (CW+20) + CW+20) % (CW+20) - 10;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(p.rot + t*1.8);
+      ctx.beginPath(); ctx.ellipse(0,0,p.r*1.5,p.r*0.8,0,0,7); ctx.fill(); ctx.restore();
+    }
+  } else if(w.type==='fog'){
+    for(const f of G.fogs){
+      const x = ((t*f.spd + f.ph) % (CW+420)) - 210;
+      const fg = ctx.createRadialGradient(x, f.y, 8, x, f.y, 210);
+      fg.addColorStop(0,'rgba(255,255,255,.16)'); fg.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=fg; ctx.fillRect(x-210, f.y-f.h, 420, f.h*2);
+    }
+  }
 }
 
 /* ---------- main loop ---------- */
@@ -1632,24 +2118,66 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 function update(dt){
+  // ---- special-city effects, aggregated per owner ----
+  G.wfx = {};
+  for(const n of G.nodes){
+    if(!n.wonderId || n.owner==='N') continue;
+    const fx = G.wfx[n.owner] = G.wfx[n.owner] || {growth:1,atk:1,speed:1,send:0,cap:0,slow:1,defend:1,mint:false};
+    switch(n.wonderId){
+      case 'beacon':   fx.growth*=1.15; break;
+      case 'mine':     fx.atk*=1.12; break;
+      case 'ranch':    fx.speed*=1.20; break;
+      case 'granary':  fx.cap+=15; break;
+      case 'drum':     fx.send+=0.10; break;
+      case 'caltrops': fx.slow*=0.85; break;
+      case 'bastion':  fx.defend*=0.90; break;
+      case 'mint':     fx.mint=true; break;
+    }
+    if(n.wonderId==='levy'){
+      n.levyAcc=(n.levyAcc||0)+dt;
+      if(n.levyAcc>=15){ n.levyAcc=0;
+        for(const c2 of G.nodes) if(c2.owner===n.owner && c2.troops<c2.cap+20) c2.troops+=2;
+        if(n.owner==='P') battleToast('🪖 Levy Grounds musters +2 troops in every city!');
+      }
+    }
+  }
+  // Twin Gates delayed second waves
+  if(G.echo && G.echo.length){
+    for(let i=G.echo.length-1;i>=0;i--){
+      const e=G.echo[i];
+      if(G.t>=e.at){
+        G.echo.splice(i,1);
+        const f=G.nodes[e.from];
+        if(f && f.owner===e.owner){
+          const a2=sendArmy(e.from, e.target, e.owner, 0.5);
+          if(a2 && e.owner==='P') battleToast('⛩ Twin Gates — second wave!');
+        }
+      }
+    }
+  }
   // growth
   for(const n of G.nodes){
     if(n.owner==='N') continue;
     let mult = n.owner==='P' ? G.mods.growth : (G.eGrow||1);
-    if(G.wonderOwner && n.owner===G.wonderOwner) mult *= 1.15;
+    const fx = G.wfx[n.owner];
+    if(fx) mult *= fx.growth;
+    if(n.wonderId==='spring') mult *= 2;
     if(G.bossAbil && G.bossAbil.type==='turtle' && n.owner===G.bossAbil.owner){
       const cnt = G.nodes.reduce((a,x)=>a+(x.owner===n.owner?1:0),0);
       if(cnt<=3) mult *= 1.6;
     }
     n.acc += n.growth*mult*dt*1.15;
-    while(n.acc>=1){ n.acc-=1; if(n.troops<n.cap) n.troops++; }
+    const capN = n.cap + (fx? fx.cap:0) + (n.wonderId==='spring'?40:0);
+    while(n.acc>=1){ n.acc-=1; if(n.troops<capN) n.troops++; }
   }
   // armies march
   for(let i=G.armies.length-1;i>=0;i--){
     const a=G.armies[i];
     const t=G.nodes[a.target];
     const dx=t.x-a.x, dy=t.y-a.y, d=Math.hypot(dx,dy);
-    const spd=a.speed*dt;
+    let slowMul=1;
+    if(G.wfx) for(const o in G.wfx){ if(o!==a.owner && G.wfx[o].slow<1) slowMul*=G.wfx[o].slow; }
+    const spd=a.speed*dt*slowMul;
     if(d<=spd+t.r*0.5){ resolveArrival(a,t); G.armies.splice(i,1); }
     else { a.x+=dx/d*spd; a.y+=dy/d*spd; a.trail=(a.trail+dt*8)%1; }
   }
@@ -1658,8 +2186,58 @@ function update(dt){
     ai.cd-=dt;
     if(ai.cd<=0){ ai.cd=ai.interval*(0.7+Math.random()*0.6); aiAct(ai); }
   }
-  const wn = G.nodes.find(n=>n.wonder);
-  G.wonderOwner = wn && wn.owner!=='N' ? wn.owner : null;
+  // capture spark particles
+  if(G.parts && G.parts.length){
+    for(let i=G.parts.length-1;i>=0;i--){
+      const p=G.parts[i];
+      p.life-=dt; if(p.life<=0){ G.parts.splice(i,1); continue; }
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.94; p.vy*=0.94;
+    }
+  }
+  // drifting clouds
+  if(G.clouds) for(const c2 of G.clouds){ c2.x += c2.v*dt; if(c2.x > CW+60) c2.x = -60; }
+  // floating combat numbers
+  if(G.floaters) for(let i=G.floaters.length-1;i>=0;i--){
+    const f=G.floaters[i]; f.life-=dt*0.9; f.y-=24*dt;
+    if(f.life<=0) G.floaters.splice(i,1);
+  }
+  // BOSS FLEE: on boss battles, if the warlord senses his city will fall,
+  // he evacuates ALL troops toward a new stronghold.
+  if(G.bossAbil){
+    G.bossFleeCd = Math.max(0, (G.bossFleeCd||0) - dt);
+    const bIdx = G.nodes.findIndex(n=>n.isBoss);
+    if(bIdx>=0){
+      const bn = G.nodes[bIdx];
+      if(bn.owner===G.bossAbil.owner && G.bossFleeCd===0 && bn.troops>2){
+        let incoming = 0;
+        for(const a of G.armies) if(a.target===bIdx && a.owner!==bn.owner) incoming += a.count;
+        if(incoming>0 && bn.troops < incoming*0.95){
+          // pick refuge: strongest friendly city, else the weakest city he can seize outright
+          let dest=-1, best=-1e9;
+          for(let j=0;j<G.nodes.length;j++){
+            if(j===bIdx) continue;
+            const t=G.nodes[j];
+            let sc;
+            if(t.owner===bn.owner) sc = 200 + t.troops;
+            else if(bn.troops > t.troops+2) sc = 100 - t.troops;
+            else continue;
+            sc -= Math.hypot(t.x-bn.x, t.y-bn.y)*0.05;
+            if(sc>best){ best=sc; dest=j; }
+          }
+          if(dest>=0){
+            const a = sendArmy(bIdx, dest, bn.owner, 1.0);
+            if(a){
+              a.boss = true; a.bossImg = bn.bossImg; a.bossName = bn.bossName;
+              bn.isBoss = false; bn.bossImg = null; bn.bossName = null; bn.r /= 1.18;
+              G.bossFleeCd = 10;
+              bigToast('👹 BOSS FLEEING!'); AudioSys.sfx('horn');
+              G.heat = Math.min(1, G.heat + 0.3);
+            }
+          }
+        }
+      }
+    }
+  }
   // boss ability: Iron Levy conscription ticks
   if(G.bossAbil && G.bossAbil.type==='rally'){
     G.bossAbil.cd -= dt;
@@ -1680,33 +2258,107 @@ function update(dt){
   updateHud();
 }
 function resolveArrival(a,t){
-  if(t.owner===a.owner){ t.troops=Math.min(t.cap+40, t.troops+a.count); return; }
+  if(t.owner===a.owner){
+    t.troops=Math.min(t.cap+40, t.troops+a.count);
+    spawnFloater(t.x, t.y - t.r - 6, '+'+a.count, '#2e8b57');
+    if(a.boss){ crownCity(t, a.bossImg, a.bossName); }
+    return;
+  }
   let atkMult = a.owner==='P'? G.mods.atk : 1;
+  const afx = G.wfx && G.wfx[a.owner];
+  if(afx) atkMult *= afx.atk;
   if(G.bossAbil && G.bossAbil.type==='fire' && a.owner===G.bossAbil.owner) atkMult *= 1.25;
-  const power = Math.round(a.count*atkMult);
+  const dfx = G.wfx && G.wfx[t.owner];
+  const power = Math.round(a.count * atkMult * (dfx? dfx.defend : 1));
   const prevOwner = t.owner;
   t.troops -= power;
+  spawnFloater(t.x, t.y - t.r - 6, '−'+power, '#b3352b');
   if(t.troops<0){
     G.heat = Math.min(1, (G.heat||0)+0.3);
     t.owner=a.owner; t.troops=Math.min(t.cap,-t.troops)||1;
     G.terrDirty = true;
-    if(t.wonder) battleToast(`🏮 ${t.wonder} seized — ${a.owner==='P'?'your armies recruit 15% faster!':'the enemy grows stronger!'}`);
+    spawnBurst(t.x, t.y, G.colors[a.owner]||'#888');
+    if(t.wonder){
+      const wt = WONDER_TYPES.find(w=>w.id===t.wonderId);
+      battleToast(`${wt?wt.icon:'✨'} ${t.wonder} seized — ${a.owner==='P'? (wt?wt.desc:'') : 'the enemy grows stronger!'}`);
+      spawnBurst(t.x,t.y,'#c9a227',20);
+      if(a.owner==='P') questEvent('wonder',1);
+    }
     else if(a.owner==='P'){ battleToast('🚩 Province captured!'); AudioSys.sfx('capture'); }
-    else if(prevOwner==='P'){ battleToast('⚠ Province lost!'); AudioSys.sfx('lost'); }
+    else if(prevOwner==='P'){ battleToast('⚠ Province lost!'); AudioSys.sfx('lost'); G.lostCity = true; }
     if(a.owner==='P'){ if(t.wonder) AudioSys.sfx('capture'); questEvent('cap',1); }
+    spawnBurst(t.x, t.y, G.colors[a.owner]||'#888');
+    // the fleeing warlord seizes his new stronghold
+    if(a.boss) crownCity(t, a.bossImg, a.bossName);
+    // boss city stormed directly: the warlord escapes to his strongest remaining city
+    else if(t.isBoss && prevOwner!==a.owner){
+      const bImg=t.bossImg, bName=t.bossName;
+      t.isBoss=false; t.bossImg=null; t.bossName=null; t.r/=1.18;
+      let refuge=null;
+      for(const n2 of G.nodes) if(n2.owner===prevOwner && n2!==t && (!refuge || n2.troops>refuge.troops)) refuge=n2;
+      if(refuge){
+        crownCity(refuge, bImg, bName);
+        battleToast('👹 The warlord escapes the fallen city!'); AudioSys.sfx('horn');
+      }
+    }
   }
   t.flash = 1;
+  if(a.boss && t.owner!==a.owner){
+    bigToast(`☠ ${a.bossName||'The fleeing warlord'} is cut down!`);
+    AudioSys.sfx('capture'); G.heat=Math.min(1,(G.heat||0)+0.3);
+    spawnBurst(a.x, a.y, '#c9a227');
+  }
 }
-function sendArmy(from,toIdx,owner){
+const WONDER_TYPES = [
+ {id:'beacon',  icon:'🏮', name:'Great Beacon',     desc:'your cities recruit 15% faster'},
+ {id:'mine',    icon:'⛏',  name:'Iron Mine',        desc:'your attacks hit 12% harder'},
+ {id:'ranch',   icon:'🐎', name:'Horse Ranch',      desc:'your armies march 20% faster'},
+ {id:'granary', icon:'🌾', name:'Grand Granary',    desc:'all your cities hold +15 more troops'},
+ {id:'drum',    icon:'🥁', name:'War Drum Tower',   desc:'every order sends 10% more of your troops'},
+ {id:'twin',    icon:'⛩',  name:'Twin Gates',       desc:'attacks FROM this city launch a second wave'},
+ {id:'spring',  icon:'💧', name:'Sacred Spring',    desc:'this city recruits twice as fast and holds +40'},
+ {id:'caltrops',icon:'✴',  name:'Caltrop Fields',   desc:'enemy armies march 15% slower'},
+ {id:'bastion', icon:'🛡', name:'Stone Bastion',    desc:'attacks against your cities are 10% weaker'},
+ {id:'levy',    icon:'🪖', name:'Levy Grounds',     desc:'all your cities gain +2 troops every 15s'},
+ {id:'mint',    icon:'🪙', name:'Imperial Mint',    desc:'win while holding it: +25 bonus merit'},
+];
+function spawnFloater(x,y,text,color){
+  G.floaters = G.floaters||[];
+  G.floaters.push({x, y, text, color, life:1, max:1});
+  if(G.floaters.length>60) G.floaters.splice(0, G.floaters.length-60);
+}
+function spawnBurst(x,y,color,n=14){
+  G.parts = G.parts||[];
+  for(let i=0;i<n;i++){
+    const ang=Math.random()*Math.PI*2, sp=40+Math.random()*90;
+    G.parts.push({x,y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:.6+Math.random()*.4, max:1, color, r:2+Math.random()*2.5});
+  }
+  if(G.parts.length>260) G.parts.splice(0, G.parts.length-260);
+}
+function crownCity(t, img, name){
+  if(t.isBoss) return;
+  t.isBoss = true; t.bossImg = img; t.bossName = name; t.r *= 1.18;
+  bigToast(`👹 ${name||'The warlord'} claims a new stronghold!`); AudioSys.sfx('horn');
+  G.heat = Math.min(1,(G.heat||0)+0.25);
+}
+function sendArmy(from,toIdx,owner,ratioOverride){
   const f=G.nodes[from];
-  const ratio = owner==='P'? G.mods.send : 0.5;
+  const ofx = G.wfx && G.wfx[owner];
+  let ratio = ratioOverride ?? (owner==='P'? G.mods.send : 0.5);
+  if(ratioOverride==null && ofx && ofx.send) ratio = Math.min(0.9, ratio + ofx.send);
   const count=Math.floor(f.troops*ratio);
-  if(count<1) return;
+  if(count<1) return null;
   f.troops-=count;
   let spdMult = owner==='P'? G.mods.speed : 1;
+  if(ofx && ofx.speed) spdMult *= ofx.speed;
   if(G.bossAbil && G.bossAbil.type==='blitz' && owner===G.bossAbil.owner) spdMult *= 1.3;
-  G.armies.push({owner, count, x:f.x, y:f.y, target:toIdx, speed:95*spdMult, trail:0});
+  const army = {owner, count, x:f.x, y:f.y, target:toIdx, speed:95*spdMult, trail:0};
+  G.armies.push(army);
+  if(f.wonderId==='twin' && ratioOverride==null){
+    (G.echo=G.echo||[]).push({from, target:toIdx, owner, at:G.t+0.7});
+  }
   if(owner==='P') AudioSys.sfx('send');
+  return army;
 }
 
 /* ---------- AI ---------- */
@@ -1790,7 +2442,7 @@ async function endBattle(win){
       const tSec = Math.round(elapsed);
       if(cloudActive()){
         try{ await api('/api/weekly', {method:'POST', body:{time:tSec}}); }catch(e){}
-      } else {
+      } else if(!profile.isTest){
         const board = (await store.get('weekly:'+wk, true)) || {};
         if(board[profile.name]==null || tSec < board[profile.name]){ board[profile.name]=tSec; await store.set('weekly:'+wk, board, true); }
       }
@@ -1799,6 +2451,8 @@ async function endBattle(win){
       merit = 40 + G.level*30 + stars*20 + streakBonus;
       headline='Skirmish won!';
     }
+    if(!G.lostCity) merit += 20;                                   // perfect victory
+    if(G.wfx && G.wfx.P && G.wfx.P.mint) merit += 25;               // Imperial Mint held at the end
     const today = new Date().toISOString().slice(0,10);
     if(profile.firstWinDay !== today){ profile.firstWinDay = today; merit *= 2; headline += ' 🌅 First victory today — 2× merit!'; }
     profile.merit += merit; profile.meritLife = (profile.meritLife||0) + merit;
@@ -1836,7 +2490,9 @@ async function endBattle(win){
     <p style="margin:4px 0">${headline}</p>
     ${win?`<div class="big-stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
       <p><b>+${merit} merit</b> · 🔥 streak ${profile.streak}${profile.streak>=3?' — keep it burning!':''}</p>`
-      :`<p class="note">Tip: strike neutral provinces early, and never leave your capital empty.</p>`}
+      :`<p class="note">💡 ${randomTip()}</p>`}
+    ${win&&!G.lostCity?'<p style="margin:4px 0">🏆 <b>Perfect victory!</b> Not a single city lost (+20 merit)</p>':''}
+    ${win&&G.wfx&&G.wfx.P&&G.wfx.P.mint?'<p style="margin:4px 0">🪙 <b>Imperial Mint held</b> (+25 merit)</p>':''}
     ${xpLine}
     ${badgeLines}
     ${nr?`<p class="note">${nr.need} merit to <b>${nr.title}</b></p>`:''}
@@ -1846,6 +2502,7 @@ async function endBattle(win){
     </div>
     <button class="btn ghost" id="btn-tomenu">War Council</button>`;
   $('#ov-end').classList.add('active');
+  if(win && G.mode==='campaign' && G.level===CAMPAIGN_LEN) setTimeout(()=>showEpilogue(G.saga, true), 700);
   const after = fn => ()=> maybeInterstitial(fn);
   const nx=$('#btn-next'); if(nx) nx.onclick = after(()=> startCampaign(G.level+1));
   $('#btn-again').onclick = after(()=> G.mode==='campaign'? startCampaign(G.level) : G.mode==='rival'? startRival(G.rivalName) : startSkirmish());
@@ -1905,6 +2562,26 @@ function draw(){
   if(G.deco) ctx.drawImage(G.deco,0,0,CW,CH);
   if(G.terrDirty){ buildTerritory(); G.terrDirty=false; }
   if(G.terr) ctx.drawImage(G.terr,0,0,CW,CH);
+  if(G.clouds) for(const c2 of G.clouds){
+    ctx.fillStyle='rgba(255,255,255,.5)';
+    ctx.beginPath();
+    ctx.arc(c2.x,c2.y,c2.s,0,7); ctx.arc(c2.x+c2.s*.9,c2.y+2,c2.s*.75,0,7);
+    ctx.arc(c2.x-c2.s*.9,c2.y+2,c2.s*.7,0,7); ctx.arc(c2.x+c2.s*.35,c2.y-c2.s*.5,c2.s*.65,0,7);
+    ctx.fill();
+  }
+  drawWeather();
+  // sunlight glints traveling down the river
+  if(G.riverPts && G.riverPts.length>2){
+    ctx.fillStyle='rgba(255,255,255,.75)';
+    for(let g2=0; g2<3; g2++){
+      const u = ((G.t*0.1 + g2/3) % 1) * (G.riverPts.length-1);
+      const i0=Math.floor(u), fr=u-i0;
+      const p0=G.riverPts[i0], p1=G.riverPts[Math.min(i0+1,G.riverPts.length-1)];
+      ctx.globalAlpha = .3 + .3*Math.sin(G.t*5 + g2*2.1);
+      ctx.beginPath(); ctx.ellipse(p0.x+(p1.x-p0.x)*fr, p0.y+(p1.y-p0.y)*fr, 6, 2, 0, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   // roads between near nodes
   ctx.strokeStyle='rgba(90,75,60,.18)'; ctx.setLineDash([4,7]); ctx.lineWidth=1.5;
   for(let i=0;i<G.nodes.length;i++)for(let j=i+1;j<G.nodes.length;j++){
@@ -1949,12 +2626,35 @@ function draw(){
       ctx.beginPath(); ctx.moveTo(-3,3); ctx.lineTo(0,-4); ctx.lineTo(3,3); ctx.closePath(); ctx.fill();
       ctx.restore();
     }
-    // banner-bearer at the head of the column
-    ctx.strokeStyle='#5a4632'; ctx.lineWidth=1.6;
-    ctx.beginPath(); ctx.moveTo(a.x,a.y-2); ctx.lineTo(a.x,a.y-12); ctx.stroke();
-    ctx.fillStyle=colA;
-    const w2=Math.sin(G.t*7)*1.5;
-    ctx.beginPath(); ctx.moveTo(a.x,a.y-12); ctx.lineTo(a.x+8,a.y-10+w2); ctx.lineTo(a.x,a.y-7); ctx.closePath(); ctx.fill();
+    if(a.boss){
+      // the warlord marches under a GREAT swallowtail war banner
+      const top=a.y-32, W=24, H=15, w2=Math.sin(G.t*7)*3;
+      ctx.strokeStyle='#5a4632'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y-2); ctx.lineTo(a.x,top-2); ctx.stroke();
+      ctx.fillStyle='#c9a227'; ctx.beginPath(); ctx.arc(a.x,top-4,2.6,0,7); ctx.fill(); // gold finial
+      ctx.fillStyle=colA;
+      ctx.beginPath();
+      ctx.moveTo(a.x, top);
+      ctx.lineTo(a.x+W,        top+3+w2);
+      ctx.lineTo(a.x+W*0.58,   top+H*0.5+w2*0.6);   // swallowtail notch
+      ctx.lineTo(a.x+W,        top+H-2+w2*0.3);
+      ctx.lineTo(a.x,          top+H);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#c9a227'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#f3e9d2'; ctx.beginPath(); ctx.arc(a.x+W*0.28, top+H*0.5+w2*0.4, 3.2, 0, 7); ctx.fill();
+      ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+      ctx.strokeStyle='#f3e9d2'; ctx.lineWidth=3.5;
+      ctx.strokeText('👹 '+(a.bossName||''), a.x, top-8);
+      ctx.fillStyle='#2b2320'; ctx.fillText('👹 '+(a.bossName||''), a.x, top-8);
+      ctx.textAlign='start';
+    } else {
+      const poleH=12, flagW=8, flagH=5;
+      ctx.strokeStyle='#5a4632'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y-2); ctx.lineTo(a.x,a.y-poleH); ctx.stroke();
+      ctx.fillStyle=colA;
+      const w2=Math.sin(G.t*7)*1.5;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y-poleH); ctx.lineTo(a.x+flagW,a.y-poleH+2+w2); ctx.lineTo(a.x,a.y-poleH+flagH); ctx.closePath(); ctx.fill();
+    }
     ctx.font='bold 13px sans-serif'; ctx.fillStyle='#2b2320';
     ctx.strokeStyle='#f3e9d2'; ctx.lineWidth=3;
     ctx.strokeText(a.count, a.x+8, a.y-8); ctx.fillText(a.count, a.x+8, a.y-8);
@@ -1991,16 +2691,17 @@ function draw(){
     ctx.lineWidth=n.kind==='capital'?7:5; ctx.strokeStyle=col; ctx.stroke();
     if(n.isBoss){ ctx.beginPath(); ctx.arc(n.x,n.y,n.r-6,0,7); ctx.strokeStyle=col+'66'; ctx.lineWidth=2.5; ctx.stroke(); }
     if(n.wonder){
-      ctx.beginPath(); ctx.arc(n.x,n.y,n.r+7,0,7);
+      const wt = WONDER_TYPES.find(w=>w.id===n.wonderId) || WONDER_TYPES[0];
+      const pulse = 1 + Math.sin(G.t*2.5)*0.08;
+      ctx.beginPath(); ctx.arc(n.x,n.y,(n.r+7)*pulse,0,7);
       ctx.strokeStyle='#c9a227'; ctx.lineWidth=3; ctx.setLineDash([6,5]); ctx.stroke(); ctx.setLineDash([]);
-      const ly=n.y-n.r-14;
-      ctx.fillStyle='#c0392b'; ctx.beginPath(); ctx.ellipse(n.x,ly,7,8.5,0,0,7); ctx.fill();
-      ctx.strokeStyle='#c9a227'; ctx.lineWidth=1.6;
-      ctx.beginPath(); ctx.moveTo(n.x-7,ly); ctx.lineTo(n.x+7,ly); ctx.stroke();
-      ctx.fillStyle='#c9a227'; ctx.fillRect(n.x-3,ly-11,6,3); ctx.fillRect(n.x-3,ly+8,6,3);
-      ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+      const ly=n.y-n.r-16;
+      ctx.font='16px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(wt.icon, n.x, ly+5);
+      ctx.font='bold 9px sans-serif';
       ctx.strokeStyle='#f3e9d2'; ctx.lineWidth=3;
-      ctx.strokeText('BEACON', n.x, ly-14); ctx.fillStyle='#8a6a10'; ctx.fillText('BEACON', n.x, ly-14);
+      ctx.strokeText(wt.name.toUpperCase(), n.x, ly-8);
+      ctx.fillStyle='#8a6a10'; ctx.fillText(wt.name.toUpperCase(), n.x, ly-8);
       ctx.textAlign='start';
     }
     // glossy highlight arc (arcade shine)
@@ -2053,6 +2754,22 @@ function draw(){
       }
     }
   }
+  if(G.parts) for(const p of G.parts){
+    ctx.globalAlpha = Math.max(0, p.life/p.max);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r*(p.life/p.max), 0, 7); ctx.fill();
+  }
+  if(G.floaters){
+    ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    for(const f of G.floaters){
+      ctx.globalAlpha = Math.max(0, f.life);
+      ctx.strokeStyle='#f3e9d2'; ctx.lineWidth=3;
+      ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle=f.color; ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.textAlign='start';
+  }
+  ctx.globalAlpha = 1;
   if(vignette) ctx.drawImage(vignette,0,0,CW,CH);
 }
 function star(cx,cy,r){ ctx.beginPath();
@@ -2121,7 +2838,7 @@ cv.addEventListener('pointerup', e=>{
   }
   drag.active=false; drag.chain=[];
 });
-$('#btn-pause').onclick=()=>{ if(!G.active)return; G.paused=true; $('#ov-pause').classList.add('active'); };
+$('#btn-pause').onclick=()=>{ if(!G.active)return; G.paused=true; $('#pause-tip').textContent='💡 '+randomTip(); $('#ov-pause').classList.add('active'); };
 const SPEEDS=[0.5,0.75,1,1.5,2];
 $('#btn-speed').onclick=()=>{
   const st = profile.settings;
@@ -2154,6 +2871,7 @@ function renderLevels(){
   const cleared = P.lvl > (curChapter+1)*10;
   $('#ch-title').innerHTML = `Chapter ${curChapter+1} / ${CHN} ${cleared?'👑':''}<br><span style="font-size:14px">${chd.t}</span>`;
   $('#ch-story').textContent = chd.s;
+  $('#btn-epilogue').style.display = (P.stars['c200']>0) ? 'block' : 'none';
   const grid=$('#level-grid'); grid.innerHTML='';
   for(let k=0;k<10;k++){
     const n = curChapter*10 + k + 1;
@@ -2177,9 +2895,110 @@ $('#btn-restart-camp').onclick=async ()=>{
   P.lvl=1; P.stars={};
   await saveProfile(); curChapter=0; renderLevels(); toast(SAGAS[G.saga].name+' restarted — the land awaits again');
 };
+$('#btn-story').onclick=()=>show('s-story');
+$('#btn-epilogue').onclick=()=>showEpilogue(G.saga, false);
 $('#ch-prev').onclick=()=>{ curChapter--; renderLevels(); };
 $('#ch-next').onclick=()=>{ curChapter++; renderLevels(); };
 $('#btn-sk-start').onclick=()=> startSkirmish();
+
+/* ---------- saga epilogues: illustrated ending on completing battle 200 ---------- */
+const SAGA_EPI = {
+ shu: { title:'The Lamp in the Western Hills', sub:'蜀 · The Shu Saga — Epilogue', paras:[
+  'It began with three men and an oath beneath falling blossoms. It ends with a realm: terraced valleys heavy with grain, river roads busy with salt and silk, and a green banner over every pass from the Jian Gorges to the southern jungles. The sandal-weaver kept his word — not by taking the land, but by giving it reasons to be taken care of.',
+  'In the schools they teach the long road: the flight across the Han River with a hundred thousand refugees who would not be left behind; the borrowed east wind at the Red Cliffs; the five Northern Expeditions that broke against the mountains and were begun again. Virtue, the ministers write, is not the absence of defeat. It is what remains standing after each one.',
+  'On the anniversary of the Oath, lamps are floated down every river in the land. The oldest veterans say that if you watch long enough, three lamps always drift together — never hurrying, never parting — all the way to the sea.',
+  'The land is united. The Han endures. The peach trees are in bloom.'] },
+ wei: { title:'Order Under Heaven', sub:'魏 · The Wei Saga — Epilogue', paras:[
+  'The north remembers hunger the way other lands remember kings. So the first decree of the united realm is not a triumph — it is a granary schedule. Military farms stretch from the Yellow River to the frontier wall, canals run straight as spear-shafts, and for the first time in a century the harvest is counted in surpluses, not funerals.',
+  'They said he was a villain in a time of heroes; he preferred to be a capable man in a time of chaos. The miracle at Guandu — ten thousand against a hundred thousand — is drilled into every officer not as a legend but as a lesson: speed, supply, and the nerve to burn the enemy\'s grain before your own runs out.',
+  'The court he built has no room for omens or favorites. Talent is promoted whether it comes from a great clan or a village gate. The empire\'s new law is carved at every crossroads in characters plain enough for a farmer to read — because it is written for him.',
+  'The land is united. The realm is ordered. The watch-fires on the wall burn low, and no one fears the dark.'] },
+ wu:  { title:'The River Holds', sub:'吳 · The Wu Saga — Epilogue', paras:[
+  'Three generations it took: the Tiger who carved the first foothold, the Little Conqueror who took the riverlands in a single burning year, and the patient younger brother who kept them. Now the Yangtze — highway, moat, and mother — carries more sails than the sky carries birds, and every one of them flies red.',
+  'The night the great fleet burned at the Red Cliffs, the river glowed so bright the fish are said to have mistaken it for dawn. Wu\'s admirals still toast that fire, but their true pride is quieter: the shipyards, the tide-charts, the ten thousand pilots who can read the river the way scholars read the classics.',
+  'The south the old maps called wilderness now sends rice north and ships east — past the islands, beyond the charts, to ports whose names have never been written in any court record. A kingdom born on the defensive has discovered the horizon.',
+  'The land is united. The fleets come home with the evening tide. The river holds — as it always has.'] },
+};
+function epilogueArt(saga){
+  const svgTop = `<svg viewBox="0 0 460 250" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:14px;border:1.5px solid #d9c9a3;display:block">`;
+  if(saga==='shu') return svgTop+`
+   <defs><linearGradient id="eshu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe9c8"/><stop offset="1" stop-color="#dfe6b4"/></linearGradient></defs>
+   <rect width="460" height="250" fill="url(#eshu)"/>
+   <circle cx="372" cy="58" r="26" fill="#f2c76a"/><circle cx="372" cy="58" r="36" fill="#f2c76a" opacity=".28"/>
+   <path d="M-10 200 L80 118 L170 200 Z" fill="#5f8f68" opacity=".85"/>
+   <path d="M90 210 L200 96 L310 210 Z" fill="#4f7f5c"/>
+   <path d="M240 215 L360 120 L470 215 Z" fill="#5f8f68" opacity=".85"/>
+   <path d="M188 108 L200 96 L212 108" fill="none" stroke="#fff" stroke-width="4" opacity=".9"/>
+   <rect x="188" y="120" width="24" height="16" fill="#f3ead2" stroke="#5a4632" stroke-width="1.4"/>
+   <path d="M182 120 Q200 108 218 120 L214 115 Q200 105 186 115 Z" fill="#7a3a30"/>
+   <rect x="194" y="106" width="12" height="9" fill="#f3ead2" stroke="#5a4632" stroke-width="1.2"/>
+   <path d="M189 106 Q200 97 211 106 L208 101 Q200 94 192 101 Z" fill="#7a3a30"/>
+   <line x1="222" y1="120" x2="222" y2="92" stroke="#5a4632" stroke-width="2.5"/>
+   <path d="M222 92 L250 96 L238 102 L250 108 L222 106 Z" fill="#2e8b57" stroke="#c9a227" stroke-width="1.5"/>
+   <rect x="0" y="200" width="460" height="50" fill="#cfd9a5"/>
+   <path d="M0 212 H460 M0 226 H460 M0 240 H460" stroke="#b8c68e" stroke-width="3"/>
+   <path d="M40 200 Q60 150 55 120" fill="none" stroke="#7a5a4a" stroke-width="3"/>
+   <circle cx="49" cy="118" r="7" fill="#f0c4cf"/><circle cx="62" cy="126" r="6" fill="#f0c4cf"/><circle cx="42" cy="132" r="6" fill="#eab2c2"/>
+   <circle cx="120" cy="70" r="2.6" fill="#f0c4cf"/><circle cx="150" cy="96" r="2.2" fill="#f0c4cf"/><circle cx="96" cy="104" r="2.4" fill="#eab2c2"/><circle cx="290" cy="80" r="2.4" fill="#f0c4cf"/>
+   <rect x="0" y="150" width="460" height="16" fill="#fff" opacity=".22"/>
+   <text x="16" y="34" font-family="serif" font-size="30" fill="#3c5a44" opacity=".55">蜀</text></svg>`;
+  if(saga==='wei') return svgTop+`
+   <defs><linearGradient id="ewei" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23304e"/><stop offset="1" stop-color="#4a5f86"/></linearGradient></defs>
+   <rect width="460" height="250" fill="url(#ewei)"/>
+   <path d="M330 46 a20 20 0 1 0 16 30 a15 15 0 1 1 -16 -30 Z" fill="#f2e2b0"/>
+   <circle cx="80" cy="40" r="1.6" fill="#fff"/><circle cx="140" cy="64" r="1.4" fill="#fff"/><circle cx="220" cy="36" r="1.7" fill="#fff"/><circle cx="410" cy="70" r="1.4" fill="#fff"/><circle cx="50" cy="92" r="1.3" fill="#fff"/>
+   <rect x="0" y="196" width="460" height="54" fill="#2c3a58"/>
+   <rect x="30" y="140" width="400" height="58" fill="#7a7f8c" stroke="#3a4256" stroke-width="2"/>
+   <path d="M30 140 h400 v-8 h-12 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-14 v6 h-16 v-6 h-12 Z" fill="#666c7c"/>
+   <rect x="196" y="112" width="68" height="86" fill="#8a8fa0" stroke="#3a4256" stroke-width="2"/>
+   <path d="M188 112 Q230 96 272 112 L266 104 Q230 90 194 104 Z" fill="#5a2e2e"/>
+   <path d="M214 198 a16 22 0 0 1 32 0 Z" fill="#2c3a58"/>
+   <line x1="230" y1="96" x2="230" y2="66" stroke="#c9a227" stroke-width="2.5"/>
+   <path d="M230 66 L262 70 L248 77 L262 84 L230 82 Z" fill="#2f6db3" stroke="#c9a227" stroke-width="1.5"/>
+   <g stroke="#c9a227" stroke-width="1.2" fill="#2f6db3">
+     <path d="M70 140 v-18 l20 3 -8 5 8 5 -20 3 Z"/><path d="M130 140 v-18 l20 3 -8 5 8 5 -20 3 Z"/>
+     <path d="M310 140 v-18 l20 3 -8 5 8 5 -20 3 Z"/><path d="M370 140 v-18 l20 3 -8 5 8 5 -20 3 Z"/>
+   </g>
+   <g fill="#f2c76a"><circle cx="90" cy="216" r="2.4"/><circle cx="170" cy="224" r="2.4"/><circle cx="290" cy="218" r="2.4"/><circle cx="380" cy="226" r="2.4"/></g>
+   <text x="16" y="34" font-family="serif" font-size="30" fill="#dfe6f2" opacity=".5">魏</text></svg>`;
+  return svgTop+`
+   <defs><linearGradient id="ewu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b06a"/><stop offset="1" stop-color="#c96a4a"/></linearGradient>
+   <linearGradient id="ewuR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d98a5a"/><stop offset="1" stop-color="#8a4a52"/></linearGradient></defs>
+   <rect width="460" height="250" fill="url(#ewu)"/>
+   <circle cx="230" cy="118" r="30" fill="#f2d07a"/><circle cx="230" cy="118" r="44" fill="#f2d07a" opacity=".3"/>
+   <rect x="0" y="132" width="460" height="118" fill="url(#ewuR)"/>
+   <path d="M0 132 L70 40 L120 132 Z" fill="#6a3a3e"/>
+   <path d="M340 132 L400 52 L460 132 Z" fill="#6a3a3e"/>
+   <path d="M210 150 Q230 162 250 150" stroke="#f2d07a" stroke-width="3" fill="none" opacity=".8"/>
+   <path d="M180 176 Q230 194 280 176" stroke="#f2d07a" stroke-width="2.5" fill="none" opacity=".5"/>
+   <g>
+     <path d="M120 196 q30 14 60 0 l-6 -8 h-48 Z" fill="#4a2c22"/>
+     <line x1="150" y1="188" x2="150" y2="150" stroke="#4a2c22" stroke-width="3"/>
+     <path d="M150 150 q26 12 0 34 Z" fill="#c0392b" stroke="#8a2820" stroke-width="1.5"/>
+   </g>
+   <g>
+     <path d="M290 208 q26 12 52 0 l-5 -7 h-42 Z" fill="#4a2c22"/>
+     <line x1="316" y1="201" x2="316" y2="168" stroke="#4a2c22" stroke-width="3"/>
+     <path d="M316 168 q22 10 0 29 Z" fill="#c0392b" stroke="#8a2820" stroke-width="1.5"/>
+   </g>
+   <path d="M84 84 q6 -7 12 0 M96 84 q6 -7 12 0" stroke="#5a3a30" stroke-width="2" fill="none"/>
+   <path d="M330 96 q6 -7 12 0" stroke="#5a3a30" stroke-width="2" fill="none"/>
+   <text x="16" y="34" font-family="serif" font-size="30" fill="#5a2a24" opacity=".55">吳</text></svg>`;
+}
+function showEpilogue(saga, fromBattle){
+  const E = SAGA_EPI[saga] || SAGA_EPI.shu;
+  $('#epi-panel').innerHTML = `
+    <span class="chapter-tag">${E.sub}</span>
+    <h2 style="margin:10px 0 8px;text-align:center">🏮 ${E.title}</h2>
+    ${epilogueArt(saga)}
+    ${E.paras.map(p=>`<p class="note" style="text-align:left;margin:10px 0;font-size:14px;line-height:1.55">${p}</p>`).join('')}
+    <p style="text-align:center;font-size:22px;letter-spacing:8px;margin:8px 0">☀ 天下一統 ☀</p>
+    ${fromBattle?'<p class="note" style="text-align:center">Your Imperial Crown 👑 and saga badge are recorded on your profile.</p>':''}
+    <button class="btn gold" id="btn-epi-close" style="width:100%">${fromBattle?'Claim your place in history':'Close'}</button>`;
+  $('#ov-epilogue').classList.add('active');
+  $('#btn-epi-close').onclick = ()=> $('#ov-epilogue').classList.remove('active');
+  if(fromBattle) AudioSys.sfx('badge');
+}
 
 /* ---------- go ---------- */
 boot();

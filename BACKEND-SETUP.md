@@ -76,7 +76,10 @@ Put it behind HTTPS (Caddy, nginx + certbot, or your PaaS does it automatically)
    ```js
    const BACKEND_URL = '';   →   const BACKEND_URL = 'https://api.yourdomain.com';
    ```
-2. Host the game file on the origin you registered in step 2. The login screen now shows a **"Sign in with Google"** button under the local login; players who use it get cloud saves and appear on the true global leaderboard. Local name/passcode play keeps working for everyone else.
+2. Host the game file on the origin you registered in step 2. Two cross-device paths now exist:
+   - **Name + passcode (no Google setup needed):** with `BACKEND_URL` set, the normal "Enter the Realm" login creates/verifies the account **on the server** — the same name + passcode works from any laptop, phone, or browser, always resuming the same save. A passcode (4+ chars) is required so accounts can't be hijacked.
+   - **Google sign-in:** appears as a button once `GOOGLE_CLIENT_ID` is configured; same cross-device behavior with Google identity.
+   The game also **fetches the shared admin config (`/api/adcfg`) live** at boot and whenever the sound settings open — so ads, music, difficulty, and special-city settings saved in the Admin Console (server mode) reach every player on every device without redeploying anything. If the server is unreachable, the game gracefully falls back to the local browser save.
 3. Open `admin.html`, choose **Connect to server**, enter your backend URL and `ADMIN_KEY`. You can now manage ads, music, difficulty, and players for the live deployment. (The **Unlock local mode** path still manages a same-origin static deployment without a backend.)
 
 ---
@@ -87,6 +90,7 @@ Put it behind HTTPS (Caddy, nginx + certbot, or your PaaS does it automatically)
 |---|---|---|
 | `GET /api/config` | — | `{googleClientId}` |
 | `POST /api/auth/google` | — | `{credential}` → `{token, profile}` |
+| `POST /api/auth/local` | — | `{name, pin}` → `{token, profile}` — name+passcode account, no Google needed |
 | `GET /api/profile` | Bearer | `{profile}` |
 | `PUT /api/profile` | Bearer | `{profile}` → `{ok}` (guardrails applied) |
 | `GET /api/leaderboard` | — | `{top:[{name,merit,wins,best,rank}], weekly:[{name,time}], week}` |

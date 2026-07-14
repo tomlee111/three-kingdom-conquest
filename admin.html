@@ -87,12 +87,21 @@ td,th{padding:6px 4px;border-bottom:1px dashed #d9c9a3;text-align:left;}
 
   <div class="card">
     <h3>Music rotation</h3>
-    <p class="note">Built-in synthesized tracks always play; URLs added here join the rotation for all players.</p>
+    <p class="note">While ANY custom tracks exist here, players hear ONLY these (rotating). Delete them all and the game reverts to the built-in synthesized tracks. The name you enter is what players see in their "Music track" dropdown.</p>
     <div id="music-list"></div>
-    <label>MP3/OGG URL</label><input id="new-music">
+    <label>Track name (shown to players)</label><input id="new-music-name" placeholder="Epic Battle">
+    <label>MP3/OGG URL</label><input id="new-music" placeholder="https://…/track.mp3">
     <button class="btn gold" id="btn-add-music">＋ Add track</button>
   </div>
 
+  <div class="card">
+    <h3>Special cities per map</h3>
+    <p class="note">Maximum number of special cities (Great Beacon, Iron Mine, Twin Gates…) that can appear on a map. 0 disables them; small maps may spawn fewer than the maximum.</p>
+    <select id="wonder-max">
+      <option value="0">0 — none</option><option value="1" selected>1 (default)</option>
+      <option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+    </select>
+  </div>
   <div class="card">
     <h3>Game difficulty (global)</h3>
     <select id="diff-adj">
@@ -100,6 +109,48 @@ td,th{padding:6px 4px;border-bottom:1px dashed #d9c9a3;text-align:left;}
       <option value="0">0 designed curve</option>
       <option value="1">+1 harder</option><option value="2">+2</option><option value="3">+3 much harder</option>
     </select>
+  </div>
+
+  <div class="card">
+    <h3>🧪 Test Lab — jump into any battle</h3>
+    <p class="note">Opens the game in a new tab in <b>test mode</b>: pick any level and settings and play it immediately. A throwaway "⚙ Test Pilot" profile is used — <b>nothing is saved</b> (no merit, XP, unlocks, or leaderboard changes), so you can test freely without polluting real player data.</p>
+    <label>Mode</label>
+    <select id="tl-mode">
+      <option value="campaign">Campaign battle (pick saga + level)</option>
+      <option value="skirmish">Skirmish (pick opponents + map)</option>
+      <option value="weekly">This week's Weekly Challenge map</option>
+    </select>
+    <div id="tl-campaign">
+      <label>Saga</label>
+      <select id="tl-saga"><option value="shu">蜀 Shu Saga</option><option value="wei">魏 Wei Saga</option><option value="wu">吳 Wu Saga</option></select>
+      <label>Battle number (1–200 · every 10th is a boss · 200 shows the saga epilogue)</label>
+      <input type="number" id="tl-level" min="1" max="200" value="1">
+    </div>
+    <div id="tl-skirmish" style="display:none">
+      <label>Opponents</label>
+      <select id="tl-opp"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+      <label>Map size</label>
+      <select id="tl-size"><option value="9">Small</option><option value="13" selected>Medium</option><option value="17">Large</option><option value="24">Very large</option></select>
+    </div>
+    <label>Difficulty tier override</label>
+    <select id="tl-tier">
+      <option value="">— use the designed curve (incl. global shift above) —</option>
+      <option value="1">Tier 1 — Recruit</option><option value="2">Tier 2 — Militia</option><option value="3">Tier 3 — Soldier</option>
+      <option value="4">Tier 4 — Veteran</option><option value="5">Tier 5 — Captain</option><option value="6">Tier 6 — Commander</option>
+      <option value="7">Tier 7 — General</option><option value="8">Tier 8 — Warlord</option><option value="9">Tier 9 — Conqueror</option>
+      <option value="10">Tier 10 — Legend</option>
+    </select>
+    <label>Game speed</label>
+    <select id="tl-speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+    <label>Special cities max override</label>
+    <select id="tl-wonders">
+      <option value="">— use current setting —</option>
+      <option value="0">0 — none</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+    </select>
+    <label>Play as kingdom</label>
+    <select id="tl-kingdom"><option value="shu">蜀 Shu</option><option value="wei">魏 Wei</option><option value="wu">吳 Wu</option></select>
+    <button class="btn gold" id="btn-testlab" style="width:100%">🚀 Launch test battle</button>
+    <p class="note">The game file must sit in the same folder as this console. Ad/music/difficulty settings above only reach the test tab after 💾 Save (the tier, speed, and special-city overrides here are passed directly and work regardless).</p>
   </div>
 
   <button class="btn gold" id="btn-save" style="width:100%">💾 Save all settings</button>
@@ -157,9 +208,21 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let toastT; function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity=0,2600);}
 const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-const DEFAULT_ADCFG={enabled:true,banner:true,freq:2,secs:5,rot:8,defaultAd:0,diffAdj:0,music:[],
+const DEFAULT_MUSIC=[
+ {name:'Epic Battle',      url:'https://raw.githubusercontent.com/tomlee111/music/main/kulakovka-battle-epic-274997.mp3'},
+ {name:'Mountain Fight',   url:'https://raw.githubusercontent.com/tomlee111/music/main/the_mountain-epic-490003.mp3'},
+ {name:'Military Warzone', url:'https://github.com/tomlee111/music/raw/refs/heads/main/desifreemusic-military-warzone-epic-warfare-soundtrack-314012.mp3'},
+ {name:'Happy War Drums',  url:'https://github.com/tomlee111/music/raw/refs/heads/main/india_happy-war-drums-494866.mp3'},
+ {name:'Invasion March',   url:'https://github.com/tomlee111/music/raw/refs/heads/main/luis_humanoide-invasion-march-star-wars-style-cinematic-music-219585.mp3'},
+ {name:'War Drums',        url:'https://github.com/tomlee111/music/raw/refs/heads/main/stereo_color-war-drums-493734.mp3'},
+ {name:'Imperial Battle',  url:'https://github.com/tomlee111/music/raw/refs/heads/main/luis_humanoide-star-wars-style-battle-music-148641.mp3'},
+ {name:'Mountain Epic',    url:'https://github.com/tomlee111/music/raw/refs/heads/main/the_mountain-epic-490003.mp3'},
+];
+const DEFAULT_ADCFG={enabled:true,banner:true,freq:2,secs:5,rot:8,defaultAd:0,diffAdj:0,wonderMax:1,
+  music:JSON.parse(JSON.stringify(DEFAULT_MUSIC)),
   ads:[{id:'d1',title:'Your ad here',text:'Configure ads in the Admin Console.',img:'',url:''},
        {id:'d2',title:'Silk Road Traders',text:'Sample rotational ad — replace me.',img:'',url:''}]};
+function normM(m,i){ return (typeof m==='string')? {name:'Custom track '+(i+1), url:m} : {name:m.name||('Custom track '+(i+1)), url:m.url}; }
 
 let MODE=null, API_URL='', ADMIN_KEY='', adcfg=null;
 const LS_ADCFG='tk3k_S:adcfg', LS_PIN='tk3k_S:adminpin', LS_BOARD='tk3k_S:leaderboard';
@@ -202,20 +265,32 @@ async function openConsole(){
   $('#local-tools').style.display = MODE==='local'?'block':'none';
   adcfg = MODE==='server' ? (await apiCall('/api/admin/adcfg')).adcfg||{...DEFAULT_ADCFG}
                           : lsGet(LS_ADCFG)||{...DEFAULT_ADCFG};
-  adcfg.ads=adcfg.ads||[]; adcfg.music=adcfg.music||[];
+  adcfg.ads=adcfg.ads||[]; adcfg.music=(adcfg.music||[]).map(normM);
+  if(adcfg.wonderMax==null) adcfg.wonderMax=1;
+  // One-time migration: configs saved before the 8 royalty-free MP3s were seeded carry an
+  // empty music list that shadows the defaults. Seed once; a later deliberate delete-all
+  // still reverts players to the built-in synthesized tracks as documented.
+  if((adcfg.musicSeedV||0) < 2){
+    if(!adcfg.music.length) adcfg.music = DEFAULT_MUSIC.map(m=>({...m}));
+    adcfg.musicSeedV = 2;
+  }
   fillForm(); renderAds(); renderMusic(); renderPlayers();
 }
 function fillForm(){
   $('#ad-enabled').checked=!!adcfg.enabled; $('#ad-banner').checked=!!adcfg.banner;
   $('#ad-freq').value=adcfg.freq??2; $('#ad-secs').value=adcfg.secs??5; $('#ad-rot').value=adcfg.rot??8;
   $('#diff-adj').value=String(adcfg.diffAdj||0);
+  $('#wonder-max').value=String(adcfg.wonderMax==null?1:adcfg.wonderMax);
 }
 function renderAds(){
   $('#ad-list').innerHTML=adcfg.ads.map((a,i)=>`<div class="item"><div class="grow"><b>${esc(a.title)}</b><br><span class="note">${esc(a.text)}</span></div><button class="btn dark" data-d="${i}">✕</button></div>`).join('')||'<p class="note">No ads.</p>';
   $$('#ad-list [data-d]').forEach(b=>b.onclick=()=>{adcfg.ads.splice(+b.dataset.d,1);renderAds();});
 }
 function renderMusic(){
-  $('#music-list').innerHTML=adcfg.music.map((u,i)=>`<div class="item"><div class="grow note" style="word-break:break-all">${esc(u)}</div><button class="btn dark" data-m="${i}">✕</button></div>`).join('')||'<p class="note">No custom tracks.</p>';
+  $('#music-list').innerHTML=adcfg.music.map((m,i)=>{
+    const t=normM(m,i);
+    return `<div class="item"><div class="grow"><b>🎵 ${esc(t.name)}</b><br><span class="note" style="word-break:break-all">${esc(t.url)}</span></div><button class="btn dark" data-m="${i}">✕</button></div>`;
+  }).join('')||'<p class="note">No custom tracks — players hear the built-in synthesized music.</p>';
   $$('#music-list [data-m]').forEach(b=>b.onclick=()=>{adcfg.music.splice(+b.dataset.m,1);renderMusic();});
 }
 $('#btn-add-ad').onclick=()=>{
@@ -225,14 +300,19 @@ $('#btn-add-ad').onclick=()=>{
   renderAds(); toast('Added — remember to Save');
 };
 $('#btn-add-music').onclick=()=>{
+  const nm=$('#new-music-name').value.trim();
   const u=$('#new-music').value.trim();
+  if(!nm){toast('Give the track a name — players will see it');return;}
   if(!/^https?:\/\//.test(u)){toast('Enter a valid http(s) URL');return;}
-  adcfg.music.push(u); $('#new-music').value=''; renderMusic(); toast('Added — remember to Save');
+  adcfg.music.push({name:nm, url:u});
+  $('#new-music-name').value=''; $('#new-music').value='';
+  renderMusic(); toast('Added — remember to Save');
 };
 $('#btn-save').onclick=async()=>{
   adcfg.enabled=$('#ad-enabled').checked; adcfg.banner=$('#ad-banner').checked;
   adcfg.freq=Math.max(1,+$('#ad-freq').value||2); adcfg.secs=Math.max(1,+$('#ad-secs').value||5);
   adcfg.rot=Math.max(3,+$('#ad-rot').value||8); adcfg.diffAdj=+$('#diff-adj').value||0;
+  adcfg.wonderMax=Math.max(0,Math.min(5,+$('#wonder-max').value??1));
   if(MODE==='server'){
     await apiCall('/api/admin/adcfg',{method:'PUT',body:{adcfg}});
     toast('✓ Saved to server for all players');
@@ -331,6 +411,30 @@ $('#import-file').onchange=e=>{
     }catch(err){ toast('Invalid file'); }
   };
   r.readAsText(f);
+};
+
+/* ---------- 🧪 Test Lab ---------- */
+$('#tl-mode').onchange=()=>{
+  const m=$('#tl-mode').value;
+  $('#tl-campaign').style.display = m==='campaign' ? 'block' : 'none';
+  $('#tl-skirmish').style.display = m==='skirmish' ? 'block' : 'none';
+};
+$('#btn-testlab').onclick=()=>{
+  const m=$('#tl-mode').value;
+  const q=new URLSearchParams({test:'1', mode:m, kingdom:$('#tl-kingdom').value});
+  if(m==='campaign'){
+    q.set('saga', $('#tl-saga').value);
+    q.set('level', String(Math.max(1, Math.min(200, +$('#tl-level').value||1))));
+  }
+  if(m==='skirmish'){ q.set('opp', $('#tl-opp').value); q.set('size', $('#tl-size').value); }
+  if($('#tl-tier').value) q.set('tier', $('#tl-tier').value);
+  if($('#tl-speed').value!=='1') q.set('speed', $('#tl-speed').value);
+  if($('#tl-wonders').value!=='') q.set('wonders', $('#tl-wonders').value);
+  let base;
+  try{ base = new URL('three-kingdoms-conquest.html', location.href).toString(); }
+  catch(e){ base = 'three-kingdoms-conquest.html'; }
+  window.open(base + '?' + q.toString(), '_blank');
+  toast('🧪 Test battle launched in a new tab');
 };
 </script>
 </body>

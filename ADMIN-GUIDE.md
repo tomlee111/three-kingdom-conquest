@@ -36,6 +36,7 @@ Administration now lives in its **own file**, completely separate from the playe
 | Ad inventory | Add/remove ads | Title, text, optional image URL, optional click-through link |
 | Music rotation | Add/remove track URLs | Adds your own MP3/OGG files to the music rotation |
 | Game difficulty | −3 … +3 | Shifts every battle's tier for all players (see §4) |
+| Special cities | 0 … 5 per map | Max Wonders (Great Beacon, Iron Mine, Twin Gates…) that can spawn; default 1, 0 disables |
 | Player accounts | Clear passcode | Removes a player's login passcode so they can set a new one |
 | Resets | Reset ads / leaderboard / player progress | Self-explanatory; leaderboard reset is irreversible |
 
@@ -54,7 +55,7 @@ To add your own tracks:
    - **incompetech.com** (Kevin MacLeod) — free under CC-BY; credit "Kevin MacLeod (incompetech.com)" somewhere in your game/site.
    - **Free Music Archive** — filter by CC0 or CC-BY licenses.
 2. Host the MP3/OGG at a **direct https URL**. If the game is hosted on a domain, the audio file's server must allow cross-origin playback (most CDNs and same-domain hosting are fine). Easiest: put the MP3 in the same folder as the game file and use its relative-to-domain URL.
-3. Admin console → **Music rotation** → paste the URL → *＋ Add track* → **Save**.
+3. Admin console → **Music rotation** → enter a **track name** (this is exactly what players see in their "Music track" dropdown) and the URL → *＋ Add track* → **Save**. While any custom tracks exist, players hear ONLY those in rotation; delete them all and the game reverts to the built-in synthesized tracks.
 4. Custom tracks appear in every player's *Music track* selector and in the auto-rotation. If a URL fails to load, the game silently skips it.
 
 **Tip:** keep files under ~3 MB and loop-friendly (the game loops them automatically).
@@ -69,6 +70,13 @@ To add your own tracks:
 - Players who hit a wall have three sanctioned ladders: **War Council upgrades** (funded by merit — even losses pay +10), **hero XP** (perks grow +5%/level), and **duo bonds**.
 
 ---
+
+## 4b. Cross-device play (players AND admin settings)
+
+With the backend deployed and `BACKEND_URL` set in the game file (see BACKEND-SETUP.md):
+- **Players:** the same commander name + passcode logs in from any device or browser and resumes the exact same save — accounts live on the server, not in the browser. Google sign-in is an optional second path.
+- **Admin settings:** use the Admin Console in **server mode**; everything you save (ads, music, difficulty, special cities) is fetched live by every game client at boot and whenever the sound settings open.
+Without a backend, saves remain per-browser (the honest limit of static hosting).
 
 ## 5. Player accounts & security
 
@@ -137,3 +145,44 @@ After any edit, just reload the page — no build step.
 - **No music** — browsers require a user tap before audio can start (the game hooks the first tap). Check the player's Music toggle, then whether a custom track URL is failing (the game falls back to built-ins).
 - **Custom ad image not showing** — the image URL must be https and publicly accessible.
 - **Leaderboard empty on a new deployment** — expected; it populates as players win battles.
+
+---
+
+## 🧪 Test Lab (new)
+
+The admin console now has a **Test Lab** card that opens the game in a new tab in **test mode**:
+
+- Pick **Campaign** (any saga, any battle 1–200 — battle 200 shows the saga epilogue), **Skirmish** (opponents + map size), or the current **Weekly Challenge** map.
+- Override the **difficulty tier** (1–10), **game speed** (0.5×–2×), **special-cities max** (0–5), and the **kingdom** you play as.
+- The game runs a throwaway **"⚙ Test Pilot"** profile: **nothing is saved** — no merit, XP, unlocks, leaderboard, or weekly times — so you can test freely without polluting real player data. The battle HUD shows a `🧪 TEST` chip.
+- Overrides are passed in the URL (`?test=1&saga=…&level=…&tier=…`), so they work even before you press 💾 Save. Everything else (music, ads, global difficulty) only reaches the test tab after saving, as usual.
+- The game file must sit in the same folder as `admin.html`.
+
+## 🎵 Music seeding fix (new)
+
+Browsers that saved an ad-config **before** the 8 royalty-free MP3s were seeded carried an empty custom-music list, which silently shadowed the new defaults — players kept hearing the synthesized tracks. Both the game and the admin console now run a **one-time migration** (`musicSeedV`): an empty list from an old config is seeded with the 8 named tracks. Deleting all tracks **after** the migration is still respected and reverts players to the built-in synthesized music, exactly as documented.
+
+## ⚡ Live Challenge / presence (new)
+
+The **Rival Duel** screen now starts with a **Live Challenge** card: a dropdown of every commander active in the **last 2 minutes**, with a refresh button.
+
+- **Local mode** (no backend): presence is shared through the browser's shared storage, so it covers players in *the same browser* (other tabs/sessions on this machine). Different browsers can't see each other without the backend — separate browsers have separate storage by design.
+- **Server mode** (backend deployed): the server tracks `last_seen` on every authenticated request plus a 45-second heartbeat, and `GET /api/online` returns everyone active in the last 2 minutes — across all devices.
+- Challenging an online commander battles their army under their banner, commanded by a hard AI, and pays rival-duel merit. True real-time head-to-head remains a future WebSocket feature (the seeded-map engine already supports it).
+
+New backend endpoints: `POST /api/presence` (heartbeat), `GET /api/online` (public list). New column: `players.last_seen`.
+
+## 👥 Multiple players on one computer (new login helper)
+
+- **Same browser, different times:** fully supported. Each commander saves under their own key; the login screen now lists **"Commanders on this device"** so players tap their name to switch. Recommend every player sets a **passcode** so no one can open someone else's commander. (With the backend deployed, note the game auto-resumes the *last cloud session* — the ⎋ logout button switches accounts.)
+- **Different browsers, same time:** also fine — browsers keep fully separate storage, so nothing collides. The only limitation is that in local mode each browser has its **own leaderboard**; they merge only once the backend is deployed (or via the admin Export/Import tools).
+
+## 🏮 Saga epilogues (new)
+
+Winning battle 200 of any saga now opens a full illustrated epilogue — an original SVG scene plus a four-paragraph ending unique to Shu, Wei, and Wu — before the normal victory panel. Once a saga is complete, a **"🏮 View the Saga Epilogue"** button appears on that saga's campaign screen to replay it anytime.
+
+## 🌦 Weather & seasons (new graphics pass)
+
+- **Seasons** cycle by chapter (spring → summer → autumn → winter): ground palette, tree foliage (blossoms, deep green, gold, snow-capped), and snow drifts change accordingly.
+- **Live weather** is seeded per level and biased by season: rain, thunderstorms (with lightning flashes), snow, drifting blossom petals, falling leaves, and rolling fog. The battle HUD chip shows the weather icon. Weather animation is driven by battle time, so it pauses with the game.
+- **New terrain set-pieces**: blossom trees, bamboo groves, paifang gates, stone lanterns, riverside fishing huts, and signal-beacon towers with smoke — mixed differently on every level.
