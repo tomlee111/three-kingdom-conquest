@@ -1678,7 +1678,7 @@ function campaignLevel(n){
 function buildFromLayout(L){
   G.nodes = L.nodes.map(([o,x,y,t,k])=> mkNode(x,y,o, o.startsWith('E')? Math.round(t*(L.boost||1)) : t, k||'city'));
 }
-function randomMap(count, enemies, seed, boost=1){
+function randomMap(count, enemies, seed, boost=1, wonderOverride=null){
   const rnd = mulberry32(seed);
   const pts=[];
   let guard=0;
@@ -1699,9 +1699,11 @@ function randomMap(count, enemies, seed, boost=1){
     const p=pts[i];
     G.nodes.push(mkNode(p.x,p.y,'N', 6+Math.floor(rnd()*12), rnd()<0.25?'fort':'city'));
   }
-  // contested Special Cities on medium+ maps (admin-configurable count, default 1)
+  // contested Special Cities: campaign mode gates by chapter (wonderOverride true/false from
+  // startCampaign, Chapter 3+); skirmish/weekly/rival keep the original medium-map-size gate.
   const maxW = Math.max(0, Math.min(5, (adcfg && adcfg.wonderMax!=null)? +adcfg.wonderMax : 1));
-  if(maxW>0 && count>=12){
+  const wonderEligible = wonderOverride===false ? false : wonderOverride===true ? true : count>=12;
+  if(maxW>0 && wonderEligible){
     const neutrals = G.nodes.filter(n=>n.owner==='N')
       .sort((a,b)=> Math.abs(a.ny-0.5)-Math.abs(b.ny-0.5)); // most central first
     const k = Math.min(maxW, neutrals.length, 1+Math.floor(neutrals.length/5));
@@ -1749,7 +1751,7 @@ async function startCampaign(n){
   const L = campaignLevel(n);
   G.mode='campaign'; G.level=n; G.par=L.par; G.rivalName=null;
   if(L.layout) buildFromLayout({...L.layout, boost:L.boost});
-  else randomMap(L.size, L.enemies, n*7919+13, L.boost);
+  else randomMap(L.size, L.enemies, n*7919+13, L.boost, L.ch>=2);
   const enemyCount = new Set(G.nodes.filter(x=>x.owner.startsWith('E')).map(x=>x.owner)).size;
   factionColors(enemyCount);
   setupAI(L.tier);
